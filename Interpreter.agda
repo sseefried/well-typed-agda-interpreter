@@ -1,13 +1,15 @@
+{-# OPTIONS --without-K --safe #-}
 module Interpreter where
 
-open import Data.Char
-open import Data.Bool
-open import Data.Nat
-import Data.Unit as U
+open import Data.Char hiding (_≤_)
+open import Data.Bool hiding (_≤_)
+open import Data.Nat hiding (_≤_)
+import Data.Nat as N
+open import Data.Unit
 open import Data.Product
 open import Data.Sum
 open import Relation.Binary.PropositionalEquality as PropEq
-open import Relation.Nullary.Core
+open import Relation.Nullary
 import Data.String as Str
 open import Data.Nat.Show
 import Data.List as List
@@ -29,7 +31,7 @@ data `Set : Set where
 # `Nat = ℕ
 # `Bool = Bool
 # (` t ⇨ s) = # t → # s
-# `Unit = U.Unit
+# `Unit = ⊤
 # (` t × s) = # t × # s
 # (` t + s) = # t ⊎ # s
  
@@ -39,19 +41,19 @@ data Γ : Set where
 
 data _∈_ :  Char → Γ → Set where
   H  : ∀ {x Δ t } → x ∈ x ::: t , Δ
-  TH : ∀ {x y Δ t } → {{prf : x ∈ Δ}} → x ∈ y ::: t , Δ
+  TH : ∀ {x y Δ t } → ⦃ prf : x ∈ Δ ⦄ → x ∈ y ::: t , Δ
 
 !Γ_[_] : ∀ {x} → (Δ : Γ) → x ∈ Δ → `Set
 !Γ_[_] · ()
 !Γ _ ::: t , Δ [ H ]     = t
-!Γ _ ::: _ , Δ [ TH {{prf = i}} ]  = !Γ Δ [ i ]
+!Γ _ ::: _ , Δ [ TH ⦃ prf = i ⦄ ]  = !Γ Δ [ i ]
 
 data _⊢_ : Γ → `Set → Set where
   `false           : ∀ {Δ} → Δ ⊢ `Bool
   `true            : ∀ {Δ} → Δ ⊢ `Bool
   `n_              : ∀ {Δ} → ℕ → Δ ⊢ `Nat
-  `v_              : ∀ {Δ} → (x : Char) → {{i : x ∈ Δ}} → Δ ⊢ !Γ Δ [ i ]
-  `_₋_              : ∀ {Δ t s} → Δ ⊢ ` t ⇨ s → Δ ⊢ t → Δ ⊢ s
+  `v_              : ∀ {Δ} → (x : Char) → ⦃ i : x ∈ Δ ⦄ → Δ ⊢ !Γ Δ [ i ]
+  `_₋_              : ∀ {Δ t s} → Δ ⊢ ` t ⇨ s → Δ ⊢ t → Δ ⊢ s --application
   `λ_`:_⇨_         : ∀ {Δ tr} → (x : Char) → (tx : `Set) 
                         → x ::: tx , Δ ⊢ tr → Δ ⊢ ` tx ⇨ tr
   `_+_             : ∀ {Δ} → Δ ⊢ `Nat → Δ ⊢ `Nat → Δ ⊢ `Nat
@@ -79,25 +81,25 @@ data ⟨_⟩ : Γ → Set₁ where
 !_[_] : ∀ {x Δ} → ⟨ Δ ⟩ → (i : x ∈ Δ) → # !Γ Δ [ i ]
 !_[_] [] ()
 !_[_] (val ∷ env) H      = val
-!_[_] (val ∷ env) (TH {{prf = i}}) = ! env [ i ]
+!_[_] (val ∷ env) (TH ⦃ prf = i ⦄) = ! env [ i ]
 
 interpret : ∀ {t} → · ⊢ t → # t
 interpret = interpret' []
   where interpret' : ∀ {Δ t} → ⟨ Δ ⟩ → Δ ⊢ t → # t
         interpret' env `true = true
         interpret' env `false = false
-        interpret' env `tt = U.unit
+        interpret' env `tt = {!!} -- FIXME: ⊤ doesn't work here. Find out why
         interpret' env (`n n) = n
-        interpret' env ((`v x) {{i = idx}}) = ! env [ idx ]
+        interpret' env ((`v x) ⦃ i = idx ⦄) = ! env [ idx ]
         interpret' env (` f ₋ x) = (interpret' env f) (interpret' env x)
         interpret' env (`λ _ `: tx ⇨ body) = λ (x : # tx) → interpret' (x ∷ env) body
         interpret' env (` l + r) = interpret' env l + interpret' env r
         interpret' env (` l * r) = interpret' env l * interpret' env r
         interpret' env (` l ∧ r) = interpret' env l ∧ interpret' env r
         interpret' env (` l ∨ r) = interpret' env l ∨ interpret' env r
-        interpret' env (` l ≤ r) with interpret' env l ≤? interpret' env r 
-        interpret' env (` l ≤ r) | yes p = true
-        interpret' env (` l ≤ r) | no ¬p = false
+        interpret' env (` l ≤ r) with interpret' env l N.≤? interpret' env r 
+        ...                             | yes  p = true
+        ...                             | no ¬p = false
         interpret' env (`¬ x) = not (interpret' env x)
         interpret' env (` f , s) = interpret' env f ,′ interpret' env s
         interpret' env (`fst p) with interpret' env p
@@ -114,8 +116,17 @@ interpret = interpret' []
         interpret' env (`if b `then et `else ef) | true = interpret' env et
         interpret' env (`if b `then et `else ef) | false = interpret' env ef
 
+instance
+  vNat : ∀ {c : Char} → c ∈ c ::: `Nat , ·
+  vNat = H
+
 testSimpleLambda : · ⊢ `Nat
-testSimpleLambda = ` (`λ 'x' `: `Nat ⇨ ` `v 'x' + `v 'x') ₋ `n 10
+testSimpleLambda = ` (`λ 'x' `: `Nat ⇨ ` (`v 'x') + (`v 'x')) ₋ `n 10
+
+testSimpleLambda2 : · ⊢ ` `Nat ⇨ `Nat
+testSimpleLambda2 = `λ 'x' `: `Nat ⇨ ` (`v 'x') + (`v 'x')
+
+{-
 
 testNestedLambda : · ⊢ `Nat
 testNestedLambda = ` ` (`λ 'x' `: `Nat ⇨ (`λ 'y' `: `Nat ⇨ ` `v 'x' * `v 'y')) ₋ `n 10 ₋ `n 15
@@ -125,8 +136,8 @@ testNestedLambda = ` ` (`λ 'x' `: `Nat ⇨ (`λ 'y' `: `Nat ⇨ ` `v 'x' * `v '
 --testNamingNotWorking : · ⊢ `Bool
 --testNamingNotWorking = ` ` `λ 'x' `: `Bool ⇨ (`λ 'x' `: `Unit ⇨ `v 'x') ₋ `true ₋ `tt
 
-testNamingWorking : · ⊢ `Unit
-testNamingWorking = ` ` `λ 'x' `: `Bool ⇨ (`λ 'x' `: `Unit ⇨ `v 'x') ₋ `true ₋ `tt
+-- testNamingWorking : · ⊢ `Unit
+-- testNamingWorking = ` ` `λ 'x' `: `Bool ⇨ (`λ 'x' `: `Unit ⇨ `v 'x') ₋ `true ₋ `tt
 
 testSum1 : · ⊢ `Nat
 testSum1 = `let 'n' `= `case `left (`n 10) `of 
@@ -152,3 +163,5 @@ testDeMorganFullOr = `let 's' `= `λ 'x' `: `Bool ⇨ `λ 'y' `: `Bool ⇨ `¬ (
 testDeMorganBrokenAnd : · ⊢ `Bool
 testDeMorganBrokenAnd = `let 's' `= `λ 'x' `: `Bool ⇨ `λ 'y' `: `Bool ⇨ ` `¬ `v 'x' ∧ `¬ `v 'y'
                         `in ` ` `v 's' ₋ `true ₋ `true
+
+-}
