@@ -4,8 +4,8 @@ module Interpreter where
 open import Data.Char hiding (_≤_)
 open import Data.Bool hiding (_≤_)
 open import Data.Nat hiding (_≤_)
-import Data.Nat as N
 open import Data.Unit
+import Data.Nat as N
 open import Data.Product
 open import Data.Sum
 open import Relation.Binary.PropositionalEquality as PropEq
@@ -27,13 +27,14 @@ data `Set : Set where
   `_×_  : `Set → `Set → `Set
   `_+_  : `Set → `Set → `Set
 
-#_ : `Set → Set
-# `Nat = ℕ
-# `Bool = Bool
-# (` t ⇨ s) = # t → # s
-# `Unit = ⊤
-# (` t × s) = # t × # s
-# (` t + s) = # t ⊎ # s
+
+⟦_⟧ : `Set → Set
+⟦ `Nat ⟧ = ℕ
+⟦ `Bool ⟧ = Bool
+⟦ (` t ⇨ s) ⟧ =  ⟦ t ⟧ → ⟦ s ⟧
+⟦ `Unit ⟧ = ⊤
+⟦ (` t × s) ⟧ = ⟦ t ⟧ × ⟦ s ⟧
+⟦ (` t + s) ⟧ = ⟦ t ⟧ ⊎ ⟦ s ⟧
  
 data Γ : Set where
   ·         : Γ 
@@ -76,23 +77,23 @@ data _⊢_ : Γ → `Set → Set where
 
 data ⟨_⟩ : Γ → Set₁ where
   []   : ⟨ · ⟩
-  _∷_  : ∀ {x t Δ} → # t → ⟨ Δ ⟩ → ⟨ x ::: t , Δ ⟩
+  _∷_  : ∀ {x t Δ} → ⟦ t ⟧ → ⟨ Δ ⟩ → ⟨ x ::: t , Δ ⟩
 
-!_[_] : ∀ {x Δ} → ⟨ Δ ⟩ → (i : x ∈ Δ) → # !Γ Δ [ i ]
+!_[_] : ∀ {x Δ} → ⟨ Δ ⟩ → (i : x ∈ Δ) → ⟦ !Γ Δ [ i ] ⟧
 !_[_] [] ()
 !_[_] (val ∷ env) H      = val
 !_[_] (val ∷ env) (TH ⦃ prf = i ⦄) = ! env [ i ]
 
-interpret : ∀ {t} → · ⊢ t → # t
+interpret : ∀ {t} → · ⊢ t → ⟦ t ⟧
 interpret = interpret' []
-  where interpret' : ∀ {Δ t} → ⟨ Δ ⟩ → Δ ⊢ t → # t
+  where interpret' : ∀ {Δ t} → ⟨ Δ ⟩ → Δ ⊢ t → ⟦ t ⟧
         interpret' env `true = true
         interpret' env `false = false
         interpret' env `tt = {!!} -- FIXME: ⊤ doesn't work here. Find out why
         interpret' env (`n n) = n
         interpret' env ((`v x) ⦃ i = idx ⦄) = ! env [ idx ]
         interpret' env (` f ₋ x) = (interpret' env f) (interpret' env x)
-        interpret' env (`λ _ `: tx ⇨ body) = λ (x : # tx) → interpret' (x ∷ env) body
+        interpret' env (`λ _ `: tx ⇨ body) = λ (x : ⟦ tx ⟧) → interpret' (x ∷ env) body
         interpret' env (` l + r) = interpret' env l + interpret' env r
         interpret' env (` l * r) = interpret' env l * interpret' env r
         interpret' env (` l ∧ r) = interpret' env l ∧ interpret' env r
