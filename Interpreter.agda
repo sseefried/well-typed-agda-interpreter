@@ -151,6 +151,9 @@ testNestedLambda2 = (`λ 'x' `: `Nat ⇨ (`λ_`:_⇨_ 'y' `Nat (` `v 'x' * `v 'y
 testNamingNotWorking : · ⊢ `Bool
 testNamingNotWorking = ` ` `λ 'x' `: `Bool ⇨ (`λ 'x' `: `Unit ⇨ `v 'x') ₋ `true ₋ `tt
 
+testNamingNotWorking2 : · ⊢ ` `Bool ⇨ ` `Unit ⇨ `Bool -- incorrect type! 
+testNamingNotWorking2 = `λ 'x' `: `Bool ⇨ (`λ 'x' `: `Unit ⇨ `v 'x')
+
 testNamingWorking : · ⊢ `Unit
 testNamingWorking = ` ` `λ 'x' `: `Bool ⇨ (`λ 'x' `: `Unit ⇨ `v 'x') ₋ `true ₋ `tt
 
