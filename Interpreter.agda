@@ -1,4 +1,4 @@
-{-# OPTIONS --without-K --safe #-}
+{-# OPTIONS --without-K --safe --overlapping-instances #-}
 module Interpreter where
 
 open import Data.Char hiding (_≤_)
@@ -89,7 +89,7 @@ interpret = interpret' []
   where interpret' : ∀ {Δ t} → ⟨ Δ ⟩ → Δ ⊢ t → ⟦ t ⟧
         interpret' env `true = true
         interpret' env `false = false
-        interpret' env `tt = {!!} -- FIXME: ⊤ doesn't work here. Find out why
+        interpret' env `tt = tt
         interpret' env (`n n) = n
         interpret' env ((`v x) ⦃ i = idx ⦄) = ! env [ idx ]
         interpret' env (` f ₋ x) = (interpret' env f) (interpret' env x)
@@ -118,8 +118,16 @@ interpret = interpret' []
         interpret' env (`if b `then et `else ef) | false = interpret' env ef
 
 instance
-  vNat : ∀ {c : Char} → c ∈ c ::: `Nat , ·
-  vNat = H
+  v_type₁ : ∀ {x Δ t} → x ∈ x ::: t , Δ
+  v_type₁ = H
+
+  v_type₂ : ∀ {x y Δ t} → ⦃ prf : x ∈ Δ ⦄ → x ∈ y ::: t , Δ
+  v_type₂ = TH
+
+
+pf : 'y' ∈ 'y' ::: `Nat , ('x' ::: `Nat , ·)
+pf = H
+
 
 testSimpleLambda : · ⊢ `Nat
 testSimpleLambda = ` (`λ 'x' `: `Nat ⇨ ` (`v 'x') + (`v 'x')) ₋ `n 10
@@ -127,18 +135,24 @@ testSimpleLambda = ` (`λ 'x' `: `Nat ⇨ ` (`v 'x') + (`v 'x')) ₋ `n 10
 testSimpleLambda2 : · ⊢ ` `Nat ⇨ `Nat
 testSimpleLambda2 = `λ 'x' `: `Nat ⇨ ` (`v 'x') + (`v 'x')
 
-{-
-
 testNestedLambda : · ⊢ `Nat
-testNestedLambda = ` ` (`λ 'x' `: `Nat ⇨ (`λ 'y' `: `Nat ⇨ ` `v 'x' * `v 'y')) ₋ `n 10 ₋ `n 15
+testNestedLambda = ` ` (`λ 'x' `: `Nat ⇨ (`λ_`:_⇨_ 'y' `Nat (` `v 'x' * `v 'y'))) ₋ `n 10 ₋ `n 15
 
--- Should not work because the inner x is not bound to a boolean, and it should not be possible to refer to the outside x using Elem
+
+testNestedLambda2 : · ⊢  ` `Nat ⇨ (` `Nat ⇨ `Nat)
+testNestedLambda2 = (`λ 'x' `: `Nat ⇨ (`λ_`:_⇨_ 'y' `Nat (` `v 'x' * `v 'y')))
+
+-- Comment from original author: Should not work because the inner x is not bound to a boolean, and it should not be possible to refer to the outside x using Elem
 -- TODO Fix this to not work with instance search
---testNamingNotWorking : · ⊢ `Bool
---testNamingNotWorking = ` ` `λ 'x' `: `Bool ⇨ (`λ 'x' `: `Unit ⇨ `v 'x') ₋ `true ₋ `tt
+--
+-- Comment by Sean: testNamingNotWorking still produces the wrong result
+-- I had to enable --overlapping-instances in order to get the examples in here to type check.
+-- Perhaps this is the reason? 
+testNamingNotWorking : · ⊢ `Bool
+testNamingNotWorking = ` ` `λ 'x' `: `Bool ⇨ (`λ 'x' `: `Unit ⇨ `v 'x') ₋ `true ₋ `tt
 
--- testNamingWorking : · ⊢ `Unit
--- testNamingWorking = ` ` `λ 'x' `: `Bool ⇨ (`λ 'x' `: `Unit ⇨ `v 'x') ₋ `true ₋ `tt
+testNamingWorking : · ⊢ `Unit
+testNamingWorking = ` ` `λ 'x' `: `Bool ⇨ (`λ 'x' `: `Unit ⇨ `v 'x') ₋ `true ₋ `tt
 
 testSum1 : · ⊢ `Nat
 testSum1 = `let 'n' `= `case `left (`n 10) `of 
@@ -165,4 +179,6 @@ testDeMorganBrokenAnd : · ⊢ `Bool
 testDeMorganBrokenAnd = `let 's' `= `λ 'x' `: `Bool ⇨ `λ 'y' `: `Bool ⇨ ` `¬ `v 'x' ∧ `¬ `v 'y'
                         `in ` ` `v 's' ₋ `true ₋ `true
 
--}
+
+tester : Set
+tester = {! interpret testNamingNotWorking !}
