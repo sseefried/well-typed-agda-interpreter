@@ -28,6 +28,21 @@ data `Set : Set where
   `_+_  : `Set → `Set → `Set
 
 
+data Var : Set where
+  x' : Var
+  y' : Var
+  z' : Var
+
+-- Inequality proofs on variables
+data _≠_ : Var → Var → Set where
+  x≠y : x' ≠ y'
+  x≠z : x' ≠ z'
+  y≠x : y' ≠ x'
+  y≠z : y' ≠ z'
+  z≠x : z' ≠ x'
+  z≠y : z' ≠ y'
+
+
 ⟦_⟧ : `Set → Set
 ⟦ `Nat ⟧ = ℕ
 ⟦ `Bool ⟧ = Bool
@@ -38,11 +53,11 @@ data `Set : Set where
  
 data Γ : Set where
   ·         : Γ 
-  _:::_,_   : Char → `Set → Γ → Γ 
+  _:::_,_   : Var → `Set → Γ → Γ 
 
-data _∈_ :  Char → Γ → Set where
+data _∈_ :  Var → Γ → Set where
   H  : ∀ {x Δ t } → x ∈ x ::: t , Δ
-  TH : ∀ {x y Δ t } → ⦃ prf : x ∈ Δ ⦄ → x ∈ y ::: t , Δ
+  TH : ∀ {x y Δ t } → ⦃ prf : x ∈ Δ ⦄ → ⦃ neprf : x ≠ y ⦄ → x ∈ y ::: t , Δ
 
 !Γ_[_] : ∀ {x} → (Δ : Γ) → x ∈ Δ → `Set
 !Γ_[_] · ()
@@ -53,9 +68,9 @@ data _⊢_ : Γ → `Set → Set where
   `false           : ∀ {Δ} → Δ ⊢ `Bool
   `true            : ∀ {Δ} → Δ ⊢ `Bool
   `n_              : ∀ {Δ} → ℕ → Δ ⊢ `Nat
-  `v_              : ∀ {Δ} → (x : Char) → ⦃ i : x ∈ Δ ⦄ → Δ ⊢ !Γ Δ [ i ]
+  `v_              : ∀ {Δ} → (x : Var) → ⦃ i : x ∈ Δ ⦄ → Δ ⊢ !Γ Δ [ i ]
   `_₋_              : ∀ {Δ t s} → Δ ⊢ ` t ⇨ s → Δ ⊢ t → Δ ⊢ s --application
-  `λ_`:_⇨_         : ∀ {Δ tr} → (x : Char) → (tx : `Set) 
+  `λ_`:_⇨_         : ∀ {Δ tr} → (x : Var) → (tx : `Set) 
                         → x ::: tx , Δ ⊢ tr → Δ ⊢ ` tx ⇨ tr
   `_+_             : ∀ {Δ} → Δ ⊢ `Nat → Δ ⊢ `Nat → Δ ⊢ `Nat
   `_*_             : ∀ {Δ} → Δ ⊢ `Nat →  Δ ⊢ `Nat → Δ ⊢ `Nat
@@ -71,9 +86,10 @@ data _⊢_ : Γ → `Set → Set where
   `case_`of_||_    : ∀ {Δ t s u} → Δ ⊢ ` t + s 
                         → Δ ⊢ ` t ⇨ u → Δ ⊢ ` s ⇨ u → Δ ⊢ u
   `tt              : ∀ {Δ} → Δ ⊢ `Unit
-  `let_`=_`in_     : ∀ {Δ th tb} → (x : Char) 
+  `let_`=_`in_     : ∀ {Δ th tb} → (x : Var) 
                        → Δ ⊢ th → x ::: th , Δ ⊢ tb → Δ ⊢ tb
   `if_`then_`else_ : ∀ {Δ t} → Δ ⊢ `Bool → Δ ⊢ t → Δ ⊢ t → Δ ⊢ t
+
 
 data ⟨_⟩ : Γ → Set₁ where
   []   : ⟨ · ⟩
@@ -83,6 +99,7 @@ data ⟨_⟩ : Γ → Set₁ where
 !_[_] [] ()
 !_[_] (val ∷ env) H      = val
 !_[_] (val ∷ env) (TH ⦃ prf = i ⦄) = ! env [ i ]
+
 
 interpret : ∀ {t} → · ⊢ t → ⟦ t ⟧
 interpret = interpret' []
@@ -117,57 +134,80 @@ interpret = interpret' []
         interpret' env (`if b `then et `else ef) | true = interpret' env et
         interpret' env (`if b `then et `else ef) | false = interpret' env ef
 
+
 instance
   v_type₁ : ∀ {x Δ t} → x ∈ x ::: t , Δ
   v_type₁ = H
 
-  v_type₂ : ∀ {x y Δ t} → ⦃ prf : x ∈ Δ ⦄ → x ∈ y ::: t , Δ
+  v_type₂ : ∀ {x y Δ t} → ⦃ prf : x ∈ Δ ⦄ → ⦃ x ≠ y ⦄ → x ∈ y ::: t , Δ
   v_type₂ = TH
 
+instance
+  xy : x' ≠ y'
+  xy = x≠y
 
-pf : 'y' ∈ 'y' ::: `Nat , ('x' ::: `Nat , ·)
+  xz : x' ≠ z'
+  xz = x≠z
+
+  yx : y' ≠ x'
+  yx = y≠x
+
+  yz : y' ≠ z'
+  yz = y≠z
+
+  zx : z' ≠ x'
+  zx = z≠x
+
+  zy : z' ≠ y'
+  zy = z≠y
+
+
+pf : y' ∈ y' ::: `Nat , (x' ::: `Nat , ·)
 pf = H
+
+pf2 : x' ∈ y' ::: `Nat , (x' ::: `Nat , ·)
+pf2 = TH
 
 
 testSimpleLambda : · ⊢ `Nat
-testSimpleLambda = ` (`λ 'x' `: `Nat ⇨ ` (`v 'x') + (`v 'x')) ₋ `n 10
+testSimpleLambda = ` (`λ x' `: `Nat ⇨ ` (`v x') + (`v x')) ₋ `n 10
 
 testSimpleLambda2 : · ⊢ ` `Nat ⇨ `Nat
-testSimpleLambda2 = `λ 'x' `: `Nat ⇨ ` (`v 'x') + (`v 'x')
+testSimpleLambda2 = `λ x' `: `Nat ⇨ ` (`v x') + (`v x')
 
 testNestedLambda : · ⊢ `Nat
-testNestedLambda = ` ` (`λ 'x' `: `Nat ⇨ (`λ_`:_⇨_ 'y' `Nat (` `v 'x' * `v 'y'))) ₋ `n 10 ₋ `n 15
+testNestedLambda = ` ` (`λ x' `: `Nat ⇨ (`λ_`:_⇨_ y' `Nat (` `v x' * `v y'))) ₋ `n 10 ₋ `n 15
 
 
 testNestedLambda2 : · ⊢  ` `Nat ⇨ (` `Nat ⇨ `Nat)
-testNestedLambda2 = (`λ 'x' `: `Nat ⇨ (`λ_`:_⇨_ 'y' `Nat (` `v 'x' * `v 'y')))
+testNestedLambda2 = (`λ x' `: `Nat ⇨ (`λ_`:_⇨_ y' `Nat (` `v x' * `v y')))
 
--- Comment from original author: Should not work because the inner x is not bound to a boolean, and it should not be possible to refer to the outside x using Elem
--- TODO Fix this to not work with instance search
---
--- Comment by Sean: testNamingNotWorking still produces the wrong result
--- I had to enable --overlapping-instances in order to get the examples in here to type check.
--- Perhaps this is the reason? 
-testNamingNotWorking : · ⊢ `Bool
-testNamingNotWorking = ` ` `λ 'x' `: `Bool ⇨ (`λ 'x' `: `Unit ⇨ `v 'x') ₋ `true ₋ `tt
+-- The following definitions do not type check. They are a relic from
+-- when the interpreter still had some bugs. Uncomment them to verify
+-- they don't type check
+-- testNamingNotWorking : · ⊢ `Bool
+-- testNamingNotWorking = ` ` `λ x' `: `Bool ⇨ (`λ x' `: `Unit ⇨ `v x') ₋ `true ₋ `tt
 
-testNamingNotWorking2 : · ⊢ ` `Bool ⇨ ` `Unit ⇨ `Bool -- incorrect type! 
-testNamingNotWorking2 = `λ 'x' `: `Bool ⇨ (`λ 'x' `: `Unit ⇨ `v 'x')
+--testNamingNotWorking2 : · ⊢ ` `Bool ⇨ ` `Unit ⇨ `Bool -- incorrect type! 
+--testNamingNotWorking2 = `λ x' `: `Bool ⇨ (`λ x' `: `Unit ⇨ `v x')
 
 testNamingWorking : · ⊢ `Unit
-testNamingWorking = ` ` `λ 'x' `: `Bool ⇨ (`λ 'x' `: `Unit ⇨ `v 'x') ₋ `true ₋ `tt
+testNamingWorking = ` ` `λ x' `: `Bool ⇨ (`λ x' `: `Unit ⇨ `v x') ₋ `true ₋ `tt
+
+testNamingWorking2 : · ⊢ ` `Bool ⇨ ` `Unit ⇨ `Unit
+testNamingWorking2 = `λ x' `: `Bool ⇨ (`λ x' `: `Unit ⇨ `v x')
 
 testSum1 : · ⊢ `Nat
-testSum1 = `let 'n' `= `case `left (`n 10) `of 
-                              `λ 'n' `: `Nat ⇨ `v 'n'
-                           || `λ 'b' `: `Bool ⇨ `if `v 'b' `then `n 1 `else `n 0 
-           `in `v 'n'  
+testSum1 = `let z' `= `case `left (`n 10) `of 
+                              `λ z' `: `Nat ⇨ `v z'
+                           || `λ x' `: `Bool ⇨ `if `v x' `then `n 1 `else `n 0 
+           `in `v z'  
 
 testSum2 : · ⊢ `Nat
-testSum2 = `let 'n' `= `case `right `true `of
-                              `λ 'n' `: `Nat ⇨ `v 'n'
-                           || `λ 'b' `: `Bool ⇨ `if `v 'b' `then `n 1 `else `n 0
-           `in `v 'n'  
+testSum2 = `let z' `= `case `right `true `of
+                              `λ z' `: `Nat ⇨ `v z'
+                           || `λ x' `: `Bool ⇨ `if `v x' `then `n 1 `else `n 0
+           `in `v z'  
 
 testProduct1 : · ⊢ `Bool
 testProduct1 = `fst (` `true , (` `n 10 , `tt ))
@@ -176,12 +216,12 @@ testProduct2 : · ⊢ ` `Nat × `Unit
 testProduct2 = `snd (` `true , (` `n 10 , `tt ))
 
 testDeMorganFullOr : · ⊢ `Bool
-testDeMorganFullOr = `let 's' `= `λ 'x' `: `Bool ⇨ `λ 'y' `: `Bool ⇨ `¬ (` `v 'x' ∨ `v 'y')
-                     `in ` ` `v 's'₋ `true ₋ `true
+testDeMorganFullOr = `let z' `= `λ x' `: `Bool ⇨ `λ y' `: `Bool ⇨ `¬ (` `v x' ∨ `v y')
+                     `in ` ` `v z' ₋ `true ₋ `true
 testDeMorganBrokenAnd : · ⊢ `Bool
-testDeMorganBrokenAnd = `let 's' `= `λ 'x' `: `Bool ⇨ `λ 'y' `: `Bool ⇨ ` `¬ `v 'x' ∧ `¬ `v 'y'
-                        `in ` ` `v 's' ₋ `true ₋ `true
-
+testDeMorganBrokenAnd = `let z' `= `λ x' `: `Bool ⇨ `λ y' `: `Bool ⇨ ` `¬ `v x' ∧ `¬ `v y'
+                        `in ` ` `v z' ₋ `true ₋ `true
 
 tester : Set
-tester = {! interpret testNamingNotWorking !}
+tester = {! interpret testProduct1 !}
+
