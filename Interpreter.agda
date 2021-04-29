@@ -23,7 +23,7 @@ data `Set : Set where
   `Nat  : `Set
   `Bool : `Set
   `_⇨_  : `Set → `Set → `Set
-  `Unit : `Set
+  `⊤ : `Set
   `_×_  : `Set → `Set → `Set
   `_+_  : `Set → `Set → `Set
 
@@ -47,13 +47,13 @@ data _≠_ : Var → Var → Set where
 ⟦ `Nat ⟧ = ℕ
 ⟦ `Bool ⟧ = Bool
 ⟦ (` t ⇨ s) ⟧ =  ⟦ t ⟧ → ⟦ s ⟧
-⟦ `Unit ⟧ = ⊤
+⟦ `⊤ ⟧ = ⊤
 ⟦ (` t × s) ⟧ = ⟦ t ⟧ × ⟦ s ⟧
 ⟦ (` t + s) ⟧ = ⟦ t ⟧ ⊎ ⟦ s ⟧
  
 data Γ : Set where
   ·         : Γ 
-  _:::_,_   : Var → `Set → Γ → Γ 
+  _:::_,_   : Var → `Set → Γ → Γ
 
 data _∈_ :  Var → Γ → Set where
   H  : ∀ {x Δ t } → x ∈ x ::: t , Δ
@@ -85,7 +85,7 @@ data _⊢_ : Γ → `Set → Set where
   `right           : ∀ {Δ t s} → Δ ⊢ s → Δ ⊢ ` t + s
   `case_`of_||_    : ∀ {Δ t s u} → Δ ⊢ ` t + s 
                         → Δ ⊢ ` t ⇨ u → Δ ⊢ ` s ⇨ u → Δ ⊢ u
-  `tt              : ∀ {Δ} → Δ ⊢ `Unit
+  `tt              : ∀ {Δ} → Δ ⊢ `⊤
   `let_`=_`in_     : ∀ {Δ th tb} → (x : Var) 
                        → Δ ⊢ th → x ::: th , Δ ⊢ tb → Δ ⊢ tb
   `if_`then_`else_ : ∀ {Δ t} → Δ ⊢ `Bool → Δ ⊢ t → Δ ⊢ t → Δ ⊢ t
@@ -186,16 +186,16 @@ testNestedLambda2 = (`λ x' `: `Nat ⇨ (`λ_`:_⇨_ y' `Nat (` `v x' * `v y')))
 -- when the interpreter still had some bugs. Uncomment them to verify
 -- they don't type check
 -- testNamingNotWorking : · ⊢ `Bool
--- testNamingNotWorking = ` ` `λ x' `: `Bool ⇨ (`λ x' `: `Unit ⇨ `v x') ₋ `true ₋ `tt
+-- testNamingNotWorking = ` ` `λ x' `: `Bool ⇨ (`λ x' `: `⊤ ⇨ `v x') ₋ `true ₋ `tt
 
---testNamingNotWorking2 : · ⊢ ` `Bool ⇨ ` `Unit ⇨ `Bool -- incorrect type! 
---testNamingNotWorking2 = `λ x' `: `Bool ⇨ (`λ x' `: `Unit ⇨ `v x')
+--testNamingNotWorking2 : · ⊢ ` `Bool ⇨ ` `⊤ ⇨ `Bool -- incorrect type! 
+--testNamingNotWorking2 = `λ x' `: `Bool ⇨ (`λ x' `: `⊤ ⇨ `v x')
 
-testNamingWorking : · ⊢ `Unit
-testNamingWorking = ` ` `λ x' `: `Bool ⇨ (`λ x' `: `Unit ⇨ `v x') ₋ `true ₋ `tt
+testNamingWorking : · ⊢ `⊤
+testNamingWorking = ` ` `λ x' `: `Bool ⇨ (`λ x' `: `⊤ ⇨ `v x') ₋ `true ₋ `tt
 
-testNamingWorking2 : · ⊢ ` `Bool ⇨ ` `Unit ⇨ `Unit
-testNamingWorking2 = `λ x' `: `Bool ⇨ (`λ x' `: `Unit ⇨ `v x')
+testNamingWorking2 : · ⊢ ` `Bool ⇨ ` `⊤ ⇨ `⊤
+testNamingWorking2 = `λ x' `: `Bool ⇨ (`λ x' `: `⊤ ⇨ `v x')
 
 testSum1 : · ⊢ `Nat
 testSum1 = `let z' `= `case `left (`n 10) `of 
@@ -212,7 +212,7 @@ testSum2 = `let z' `= `case `right `true `of
 testProduct1 : · ⊢ `Bool
 testProduct1 = `fst (` `true , (` `n 10 , `tt ))
 
-testProduct2 : · ⊢ ` `Nat × `Unit
+testProduct2 : · ⊢ ` `Nat × `⊤
 testProduct2 = `snd (` `true , (` `n 10 , `tt ))
 
 testDeMorganFullOr : · ⊢ `Bool
