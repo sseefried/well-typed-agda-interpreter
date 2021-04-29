@@ -7,25 +7,25 @@ open import Data.Nat
 open import Interpreter
 
 
-pf : y' ∈ y' ::: `Nat , (x' ::: `Nat , ·)
+pf : y' ∈ y' ::: `ℕ , (x' ::: `ℕ , ·)
 pf = H
 
-pf2 : x' ∈ y' ::: `Nat , (x' ::: `Nat , ·)
+pf2 : x' ∈ y' ::: `ℕ , (x' ::: `ℕ , ·)
 pf2 = TH
 
 
-testSimpleLambda : · ⊢ `Nat
-testSimpleLambda = ` (`λ x' `: `Nat ⇨ ` (`v x') + (`v x')) ₋ `n 10
+testSimpleLambda : · ⊢ `ℕ
+testSimpleLambda = ` (`λ x' `: `ℕ ⇨ ` (`v x') + (`v x')) ₋ `n 10
 
-testSimpleLambda2 : · ⊢ ` `Nat ⇨ `Nat
-testSimpleLambda2 = `λ x' `: `Nat ⇨ ` (`v x') + (`v x')
+testSimpleLambda2 : · ⊢ ` `ℕ ⇨ `ℕ
+testSimpleLambda2 = `λ x' `: `ℕ ⇨ ` (`v x') + (`v x')
 
-testNestedLambda : · ⊢ `Nat
-testNestedLambda = ` ` (`λ x' `: `Nat ⇨ (`λ_`:_⇨_ y' `Nat (` `v x' * `v y'))) ₋ `n 10 ₋ `n 15
+testNestedLambda : · ⊢ `ℕ
+testNestedLambda = ` ` (`λ x' `: `ℕ ⇨ (`λ_`:_⇨_ y' `ℕ (` `v x' * `v y'))) ₋ `n 10 ₋ `n 15
 
 
-testNestedLambda2 : · ⊢  ` `Nat ⇨ (` `Nat ⇨ `Nat)
-testNestedLambda2 = (`λ x' `: `Nat ⇨ (`λ_`:_⇨_ y' `Nat (` `v x' * `v y')))
+testNestedLambda2 : · ⊢  ` `ℕ ⇨ (` `ℕ ⇨ `ℕ)
+testNestedLambda2 = (`λ x' `: `ℕ ⇨ (`λ_`:_⇨_ y' `ℕ (` `v x' * `v y')))
 
 -- The following definitions do not type check. They are a relic from
 -- when the interpreter still had some bugs. Uncomment them to verify
@@ -42,22 +42,22 @@ testNamingWorking = ` ` `λ x' `: `Bool ⇨ (`λ x' `: `⊤ ⇨ `v x') ₋ `true
 testNamingWorking2 : · ⊢ ` `Bool ⇨ ` `⊤ ⇨ `⊤
 testNamingWorking2 = `λ x' `: `Bool ⇨ (`λ x' `: `⊤ ⇨ `v x')
 
-testSum1 : · ⊢ `Nat
+testSum1 : · ⊢ `ℕ
 testSum1 = `let z' `= `case `left (`n 10) `of
-                              `λ z' `: `Nat ⇨ `v z'
+                              `λ z' `: `ℕ ⇨ `v z'
                            || `λ x' `: `Bool ⇨ `if `v x' `then `n 1 `else `n 0
            `in `v z'
 
-testSum2 : · ⊢ `Nat
+testSum2 : · ⊢ `ℕ
 testSum2 = `let z' `= `case `right `true `of
-                              `λ z' `: `Nat ⇨ `v z'
+                              `λ z' `: `ℕ ⇨ `v z'
                            || `λ x' `: `Bool ⇨ `if `v x' `then `n 1 `else `n 0
            `in `v z'
 
 testProduct1 : · ⊢ `Bool
 testProduct1 = `fst (` `true , (` `n 10 , `tt ))
 
-testProduct2 : · ⊢ ` `Nat × `⊤
+testProduct2 : · ⊢ ` `ℕ × `⊤
 testProduct2 = `snd (` `true , (` `n 10 , `tt ))
 
 testDeMorganFullOr : · ⊢ `Bool

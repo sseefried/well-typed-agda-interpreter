@@ -20,7 +20,7 @@ infix 2 _∈_
 infix 1 _⊢_
 
 data `Set : Set where
-  `Nat  : `Set
+  `ℕ    : `Set
   `Bool : `Set
   `_⇨_  : `Set → `Set → `Set
   `⊤    : `Set
@@ -44,7 +44,7 @@ data _≠_ : Var → Var → Set where
 
 
 ⟦_⟧ : `Set → Set
-⟦ `Nat ⟧ = ℕ
+⟦ `ℕ ⟧ = ℕ
 ⟦ `Bool ⟧ = Bool
 ⟦ (` t ⇨ s) ⟧ =  ⟦ t ⟧ → ⟦ s ⟧
 ⟦ `⊤ ⟧ = ⊤
@@ -67,16 +67,16 @@ data _∈_ :  Var → Γ → Set where
 data _⊢_ : Γ → `Set → Set where
   `false           : ∀ {Δ} → Δ ⊢ `Bool
   `true            : ∀ {Δ} → Δ ⊢ `Bool
-  `n_              : ∀ {Δ} → ℕ → Δ ⊢ `Nat
+  `n_              : ∀ {Δ} → ℕ → Δ ⊢ `ℕ
   `v_              : ∀ {Δ} → (x : Var) → ⦃ i : x ∈ Δ ⦄ → Δ ⊢ !Γ Δ [ i ]
   `_₋_              : ∀ {Δ t s} → Δ ⊢ ` t ⇨ s → Δ ⊢ t → Δ ⊢ s --application
   `λ_`:_⇨_         : ∀ {Δ tr} → (x : Var) → (tx : `Set)
                         → x ::: tx , Δ ⊢ tr → Δ ⊢ ` tx ⇨ tr
-  `_+_             : ∀ {Δ} → Δ ⊢ `Nat → Δ ⊢ `Nat → Δ ⊢ `Nat
-  `_*_             : ∀ {Δ} → Δ ⊢ `Nat →  Δ ⊢ `Nat → Δ ⊢ `Nat
+  `_+_             : ∀ {Δ} → Δ ⊢ `ℕ → Δ ⊢ `ℕ → Δ ⊢ `ℕ
+  `_*_             : ∀ {Δ} → Δ ⊢ `ℕ →  Δ ⊢ `ℕ → Δ ⊢ `ℕ
   `_∧_             : ∀ {Δ} → Δ ⊢ `Bool → Δ ⊢ `Bool → Δ ⊢ `Bool
   `_∨_             : ∀ {Δ} → Δ ⊢ `Bool →  Δ ⊢ `Bool → Δ ⊢ `Bool
-  `_≤_             : ∀ {Δ} → Δ ⊢ `Nat → Δ ⊢ `Nat →  Δ ⊢ `Bool
+  `_≤_             : ∀ {Δ} → Δ ⊢ `ℕ → Δ ⊢ `ℕ →  Δ ⊢ `Bool
   `¬_              : ∀ {Δ} → Δ ⊢ `Bool →  Δ ⊢ `Bool
   `_,_             : ∀ {Δ t s} → Δ ⊢ t →  Δ ⊢ s →  Δ ⊢ ` t × s
   `fst             : ∀ {Δ t s} → Δ ⊢ ` t × s → Δ ⊢ t
