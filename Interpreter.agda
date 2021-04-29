@@ -23,7 +23,7 @@ data `Set : Set where
   `Nat  : `Set
   `Bool : `Set
   `_⇨_  : `Set → `Set → `Set
-  `⊤ : `Set
+  `⊤    : `Set
   `_×_  : `Set → `Set → `Set
   `_+_  : `Set → `Set → `Set
 
@@ -50,9 +50,9 @@ data _≠_ : Var → Var → Set where
 ⟦ `⊤ ⟧ = ⊤
 ⟦ (` t × s) ⟧ = ⟦ t ⟧ × ⟦ s ⟧
 ⟦ (` t + s) ⟧ = ⟦ t ⟧ ⊎ ⟦ s ⟧
- 
+
 data Γ : Set where
-  ·         : Γ 
+  ·         : Γ
   _:::_,_   : Var → `Set → Γ → Γ
 
 data _∈_ :  Var → Γ → Set where
@@ -70,23 +70,23 @@ data _⊢_ : Γ → `Set → Set where
   `n_              : ∀ {Δ} → ℕ → Δ ⊢ `Nat
   `v_              : ∀ {Δ} → (x : Var) → ⦃ i : x ∈ Δ ⦄ → Δ ⊢ !Γ Δ [ i ]
   `_₋_              : ∀ {Δ t s} → Δ ⊢ ` t ⇨ s → Δ ⊢ t → Δ ⊢ s --application
-  `λ_`:_⇨_         : ∀ {Δ tr} → (x : Var) → (tx : `Set) 
+  `λ_`:_⇨_         : ∀ {Δ tr} → (x : Var) → (tx : `Set)
                         → x ::: tx , Δ ⊢ tr → Δ ⊢ ` tx ⇨ tr
   `_+_             : ∀ {Δ} → Δ ⊢ `Nat → Δ ⊢ `Nat → Δ ⊢ `Nat
   `_*_             : ∀ {Δ} → Δ ⊢ `Nat →  Δ ⊢ `Nat → Δ ⊢ `Nat
   `_∧_             : ∀ {Δ} → Δ ⊢ `Bool → Δ ⊢ `Bool → Δ ⊢ `Bool
   `_∨_             : ∀ {Δ} → Δ ⊢ `Bool →  Δ ⊢ `Bool → Δ ⊢ `Bool
   `_≤_             : ∀ {Δ} → Δ ⊢ `Nat → Δ ⊢ `Nat →  Δ ⊢ `Bool
-  `¬_              : ∀ {Δ} → Δ ⊢ `Bool →  Δ ⊢ `Bool 
+  `¬_              : ∀ {Δ} → Δ ⊢ `Bool →  Δ ⊢ `Bool
   `_,_             : ∀ {Δ t s} → Δ ⊢ t →  Δ ⊢ s →  Δ ⊢ ` t × s
   `fst             : ∀ {Δ t s} → Δ ⊢ ` t × s → Δ ⊢ t
   `snd             : ∀ {Δ t s} → Δ ⊢ ` t × s → Δ ⊢ s
   `left            : ∀ {Δ t s} → Δ ⊢ t → Δ ⊢ ` t + s
   `right           : ∀ {Δ t s} → Δ ⊢ s → Δ ⊢ ` t + s
-  `case_`of_||_    : ∀ {Δ t s u} → Δ ⊢ ` t + s 
+  `case_`of_||_    : ∀ {Δ t s u} → Δ ⊢ ` t + s
                         → Δ ⊢ ` t ⇨ u → Δ ⊢ ` s ⇨ u → Δ ⊢ u
   `tt              : ∀ {Δ} → Δ ⊢ `⊤
-  `let_`=_`in_     : ∀ {Δ th tb} → (x : Var) 
+  `let_`=_`in_     : ∀ {Δ th tb} → (x : Var)
                        → Δ ⊢ th → x ::: th , Δ ⊢ tb → Δ ⊢ tb
   `if_`then_`else_ : ∀ {Δ t} → Δ ⊢ `Bool → Δ ⊢ t → Δ ⊢ t → Δ ⊢ t
 
@@ -115,7 +115,7 @@ interpret = interpret' []
         interpret' env (` l * r) = interpret' env l * interpret' env r
         interpret' env (` l ∧ r) = interpret' env l ∧ interpret' env r
         interpret' env (` l ∨ r) = interpret' env l ∨ interpret' env r
-        interpret' env (` l ≤ r) with interpret' env l N.≤? interpret' env r 
+        interpret' env (` l ≤ r) with interpret' env l N.≤? interpret' env r
         ...                             | yes  p = true
         ...                             | no ¬p = false
         interpret' env (`¬ x) = not (interpret' env x)
@@ -160,68 +160,3 @@ instance
 
   zy : z' ≠ y'
   zy = z≠y
-
-
-pf : y' ∈ y' ::: `Nat , (x' ::: `Nat , ·)
-pf = H
-
-pf2 : x' ∈ y' ::: `Nat , (x' ::: `Nat , ·)
-pf2 = TH
-
-
-testSimpleLambda : · ⊢ `Nat
-testSimpleLambda = ` (`λ x' `: `Nat ⇨ ` (`v x') + (`v x')) ₋ `n 10
-
-testSimpleLambda2 : · ⊢ ` `Nat ⇨ `Nat
-testSimpleLambda2 = `λ x' `: `Nat ⇨ ` (`v x') + (`v x')
-
-testNestedLambda : · ⊢ `Nat
-testNestedLambda = ` ` (`λ x' `: `Nat ⇨ (`λ_`:_⇨_ y' `Nat (` `v x' * `v y'))) ₋ `n 10 ₋ `n 15
-
-
-testNestedLambda2 : · ⊢  ` `Nat ⇨ (` `Nat ⇨ `Nat)
-testNestedLambda2 = (`λ x' `: `Nat ⇨ (`λ_`:_⇨_ y' `Nat (` `v x' * `v y')))
-
--- The following definitions do not type check. They are a relic from
--- when the interpreter still had some bugs. Uncomment them to verify
--- they don't type check
--- testNamingNotWorking : · ⊢ `Bool
--- testNamingNotWorking = ` ` `λ x' `: `Bool ⇨ (`λ x' `: `⊤ ⇨ `v x') ₋ `true ₋ `tt
-
---testNamingNotWorking2 : · ⊢ ` `Bool ⇨ ` `⊤ ⇨ `Bool -- incorrect type! 
---testNamingNotWorking2 = `λ x' `: `Bool ⇨ (`λ x' `: `⊤ ⇨ `v x')
-
-testNamingWorking : · ⊢ `⊤
-testNamingWorking = ` ` `λ x' `: `Bool ⇨ (`λ x' `: `⊤ ⇨ `v x') ₋ `true ₋ `tt
-
-testNamingWorking2 : · ⊢ ` `Bool ⇨ ` `⊤ ⇨ `⊤
-testNamingWorking2 = `λ x' `: `Bool ⇨ (`λ x' `: `⊤ ⇨ `v x')
-
-testSum1 : · ⊢ `Nat
-testSum1 = `let z' `= `case `left (`n 10) `of 
-                              `λ z' `: `Nat ⇨ `v z'
-                           || `λ x' `: `Bool ⇨ `if `v x' `then `n 1 `else `n 0 
-           `in `v z'  
-
-testSum2 : · ⊢ `Nat
-testSum2 = `let z' `= `case `right `true `of
-                              `λ z' `: `Nat ⇨ `v z'
-                           || `λ x' `: `Bool ⇨ `if `v x' `then `n 1 `else `n 0
-           `in `v z'  
-
-testProduct1 : · ⊢ `Bool
-testProduct1 = `fst (` `true , (` `n 10 , `tt ))
-
-testProduct2 : · ⊢ ` `Nat × `⊤
-testProduct2 = `snd (` `true , (` `n 10 , `tt ))
-
-testDeMorganFullOr : · ⊢ `Bool
-testDeMorganFullOr = `let z' `= `λ x' `: `Bool ⇨ `λ y' `: `Bool ⇨ `¬ (` `v x' ∨ `v y')
-                     `in ` ` `v z' ₋ `true ₋ `true
-testDeMorganBrokenAnd : · ⊢ `Bool
-testDeMorganBrokenAnd = `let z' `= `λ x' `: `Bool ⇨ `λ y' `: `Bool ⇨ ` `¬ `v x' ∧ `¬ `v y'
-                        `in ` ` `v z' ₋ `true ₋ `true
-
-tester : Set
-tester = {! interpret testProduct1 !}
-
