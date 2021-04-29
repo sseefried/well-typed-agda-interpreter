@@ -17,16 +17,17 @@ open import Data.Empty
 
 infix 3 _:::_,_
 infix 2 _∈_
+
 infix 1 _⊢_
 
 data `Set : Set where
   `ℕ    : `Set
   `Bool : `Set
-  `_⇨_  : `Set → `Set → `Set
+  _`⇨_  : `Set → `Set → `Set
   `⊤    : `Set
-  `_×_  : `Set → `Set → `Set
-  `_+_  : `Set → `Set → `Set
-
+  _`×_  : `Set → `Set → `Set
+  _`+_  : `Set → `Set → `Set
+infixr 2 _`⇨_
 
 data Var : Set where
   x' : Var
@@ -46,10 +47,10 @@ data _≠_ : Var → Var → Set where
 ⟦_⟧ : `Set → Set
 ⟦ `ℕ ⟧ = ℕ
 ⟦ `Bool ⟧ = Bool
-⟦ (` t ⇨ s) ⟧ =  ⟦ t ⟧ → ⟦ s ⟧
+⟦ (t `⇨ s) ⟧ =  ⟦ t ⟧ → ⟦ s ⟧
 ⟦ `⊤ ⟧ = ⊤
-⟦ (` t × s) ⟧ = ⟦ t ⟧ × ⟦ s ⟧
-⟦ (` t + s) ⟧ = ⟦ t ⟧ ⊎ ⟦ s ⟧
+⟦ (t `× s) ⟧ = ⟦ t ⟧ × ⟦ s ⟧
+⟦ (t `+ s) ⟧ = ⟦ t ⟧ ⊎ ⟦ s ⟧
 
 data Γ : Set where
   ·         : Γ
@@ -64,31 +65,44 @@ data _∈_ :  Var → Γ → Set where
 !Γ _ ::: t , Δ [ H ]     = t
 !Γ _ ::: _ , Δ [ TH ⦃ prf = i ⦄ ]  = !Γ Δ [ i ]
 
+infix 30 `v_
+infix 30 `n_
+infix 30 `¬_
+
+infix 26 _`+_
+infix 27 _`*_
+infix 27 _`∧_
+infix 26 _`∨_
+infix 24 _`≤_
+infix 24 _`,_
+infixl 22 _`₋_
+
 data _⊢_ : Γ → `Set → Set where
   `false           : ∀ {Δ} → Δ ⊢ `Bool
   `true            : ∀ {Δ} → Δ ⊢ `Bool
   `n_              : ∀ {Δ} → ℕ → Δ ⊢ `ℕ
   `v_              : ∀ {Δ} → (x : Var) → ⦃ i : x ∈ Δ ⦄ → Δ ⊢ !Γ Δ [ i ]
-  `_₋_              : ∀ {Δ t s} → Δ ⊢ ` t ⇨ s → Δ ⊢ t → Δ ⊢ s --application
+  _`₋_             : ∀ {Δ t s} → Δ ⊢ t `⇨ s → Δ ⊢ t → Δ ⊢ s --application
   `λ_`:_⇨_         : ∀ {Δ tr} → (x : Var) → (tx : `Set)
-                        → x ::: tx , Δ ⊢ tr → Δ ⊢ ` tx ⇨ tr
-  `_+_             : ∀ {Δ} → Δ ⊢ `ℕ → Δ ⊢ `ℕ → Δ ⊢ `ℕ
-  `_*_             : ∀ {Δ} → Δ ⊢ `ℕ →  Δ ⊢ `ℕ → Δ ⊢ `ℕ
-  `_∧_             : ∀ {Δ} → Δ ⊢ `Bool → Δ ⊢ `Bool → Δ ⊢ `Bool
-  `_∨_             : ∀ {Δ} → Δ ⊢ `Bool →  Δ ⊢ `Bool → Δ ⊢ `Bool
-  `_≤_             : ∀ {Δ} → Δ ⊢ `ℕ → Δ ⊢ `ℕ →  Δ ⊢ `Bool
+                        → x ::: tx , Δ ⊢ tr → Δ ⊢ tx `⇨ tr
+  _`+_             : ∀ {Δ} → Δ ⊢ `ℕ → Δ ⊢ `ℕ → Δ ⊢ `ℕ
+  _`*_             : ∀ {Δ} → Δ ⊢ `ℕ →  Δ ⊢ `ℕ → Δ ⊢ `ℕ
+  _`∧_             : ∀ {Δ} → Δ ⊢ `Bool → Δ ⊢ `Bool → Δ ⊢ `Bool
+  _`∨_             : ∀ {Δ} → Δ ⊢ `Bool →  Δ ⊢ `Bool → Δ ⊢ `Bool
+  _`≤_             : ∀ {Δ} → Δ ⊢ `ℕ → Δ ⊢ `ℕ →  Δ ⊢ `Bool
   `¬_              : ∀ {Δ} → Δ ⊢ `Bool →  Δ ⊢ `Bool
-  `_,_             : ∀ {Δ t s} → Δ ⊢ t →  Δ ⊢ s →  Δ ⊢ ` t × s
-  `fst             : ∀ {Δ t s} → Δ ⊢ ` t × s → Δ ⊢ t
-  `snd             : ∀ {Δ t s} → Δ ⊢ ` t × s → Δ ⊢ s
-  `left            : ∀ {Δ t s} → Δ ⊢ t → Δ ⊢ ` t + s
-  `right           : ∀ {Δ t s} → Δ ⊢ s → Δ ⊢ ` t + s
-  `case_`of_||_    : ∀ {Δ t s u} → Δ ⊢ ` t + s
-                        → Δ ⊢ ` t ⇨ u → Δ ⊢ ` s ⇨ u → Δ ⊢ u
+  _`,_             : ∀ {Δ t s} → Δ ⊢ t →  Δ ⊢ s →  Δ ⊢ t `× s
+  `fst             : ∀ {Δ t s} → Δ ⊢ t `× s → Δ ⊢ t
+  `snd             : ∀ {Δ t s} → Δ ⊢ t `× s → Δ ⊢ s
+  `left            : ∀ {Δ t s} → Δ ⊢ t → Δ ⊢ t `+ s
+  `right           : ∀ {Δ t s} → Δ ⊢ s → Δ ⊢ t `+ s
+  `case_`of_||_    : ∀ {Δ t s u} → Δ ⊢ t `+ s
+                        → Δ ⊢ t `⇨ u → Δ ⊢ s `⇨ u → Δ ⊢ u
   `tt              : ∀ {Δ} → Δ ⊢ `⊤
   `let_`=_`in_     : ∀ {Δ th tb} → (x : Var)
                        → Δ ⊢ th → x ::: th , Δ ⊢ tb → Δ ⊢ tb
   `if_`then_`else_ : ∀ {Δ t} → Δ ⊢ `Bool → Δ ⊢ t → Δ ⊢ t → Δ ⊢ t
+
 
 
 data ⟨_⟩ : Γ → Set₁ where
@@ -109,17 +123,17 @@ interpret = interpret' []
         interpret' env `tt = tt
         interpret' env (`n n) = n
         interpret' env ((`v x) ⦃ i = idx ⦄) = ! env [ idx ]
-        interpret' env (` f ₋ x) = (interpret' env f) (interpret' env x)
+        interpret' env (f `₋ x) = (interpret' env f) (interpret' env x)
         interpret' env (`λ _ `: tx ⇨ body) = λ (x : ⟦ tx ⟧) → interpret' (x ∷ env) body
-        interpret' env (` l + r) = interpret' env l + interpret' env r
-        interpret' env (` l * r) = interpret' env l * interpret' env r
-        interpret' env (` l ∧ r) = interpret' env l ∧ interpret' env r
-        interpret' env (` l ∨ r) = interpret' env l ∨ interpret' env r
-        interpret' env (` l ≤ r) with interpret' env l N.≤? interpret' env r
+        interpret' env (l `+ r) = interpret' env l + interpret' env r
+        interpret' env (l `* r) = interpret' env l * interpret' env r
+        interpret' env (l `∧ r) = interpret' env l ∧ interpret' env r
+        interpret' env (l `∨ r) = interpret' env l ∨ interpret' env r
+        interpret' env (l `≤ r) with interpret' env l N.≤? interpret' env r
         ...                             | yes  p = true
         ...                             | no ¬p = false
         interpret' env (`¬ x) = not (interpret' env x)
-        interpret' env (` f , s) = interpret' env f ,′ interpret' env s
+        interpret' env (f `, s) = interpret' env f ,′ interpret' env s
         interpret' env (`fst p) with interpret' env p
         interpret' env (`fst p) | f , s = f
         interpret' env (`snd p) with interpret' env p
