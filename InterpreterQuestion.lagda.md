@@ -13,8 +13,8 @@ I have:
 - updated it to work with Agda in 2021
 - added some `instance` declarations to resolve `_∈_` proofs.
 - added the `--overlapping-instances` option to the `OPTIONS` pragma.
-- Pulled out constant functions such as `\`_∧_` into their own data structure
-  called `Constant` and added a constructor `\`c` to the `_⊢_` data structure
+- Pulled out constant functions such as ```_∧_`` into their own data structure
+  called `Constant` and added a constructor ```c`` to the `_⊢_` data structure
   to embed them in terms.
 - Added a variable type (`Var`), a data structure to prove that two variables are not
   equal and some `instance` declarations so that these can be resolved automatically.
@@ -192,7 +192,7 @@ and₂ : · ⊢ `Bool `× `Bool `⇨ `Bool
 and₂ = `c `∧
 ```
 
-I want to write a function called η-reduce that one could prove the following:
+I want to write a function called η-reduce that one could prove the following on:
 
     pf : η-reduce and₁ ≡ and₂
     pf = refl
@@ -212,12 +212,12 @@ type check this module:
 
 You will get the following error message: 
 
->  I'm not sure if there should be a case for the constructor `v_,
-> because I get stuck when trying to solve the following unification
-> problems (inferred index ≟ expected index):
-> Δ ≟ ·
-> !Γ Δ [ i ] ≟ t₁ `⇨ t₂
-> when checking the definition of eta-reduce
+    I'm not sure if there should be a case for the constructor `v_,
+    because I get stuck when trying to solve the following unification
+    problems (inferred index ≟ expected index):
+       Δ ≟ ·
+       !Γ Δ [ i ] ≟ t₁ `⇨ t₂
+    when checking the definition of eta-reduce
 
 I did a bit of searching on the Internet and the only source I could find
 that I could understand was this [one](https://doisinkidney.com/posts/2018-09-20-agda-tips.html]).
@@ -225,7 +225,7 @@ that I could understand was this [one](https://doisinkidney.com/posts/2018-09-20
 It seems to be suggesting that one of the indices for a type is not in constructor form but is,
 rather, a function.
 
-Looking at the definition of `_⊢_` we see that the `v_` constructor is most likely at fault: 
+Looking at the definition of `_⊢_` we see that the ```v_`` constructor is most likely at fault: 
 
     `v_ : ∀ {Δ} → (x : Var) → ⦃ i : x ∈ Δ ⦄ → Δ ⊢ !Γ Δ [ i ]
 
