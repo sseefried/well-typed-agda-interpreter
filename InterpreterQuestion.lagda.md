@@ -13,7 +13,7 @@ I have:
 - updated it to work with Agda in 2021
 - added some `instance` declarations to resolve `_∈_` proofs.
 - added the `--overlapping-instances` option to the `OPTIONS` pragma.
-- Pulled out constant functions such as `` `_∧_` ` into their own data structure
+- Pulled out constant functions such as `` `_∧_ `` into their own data structure
   called `Constant` and added a constructor `` `c `` to the `_⊢_` data structure
   to embed them in terms.
 - Added a variable type (`Var`), a data structure to prove that two variables are not
@@ -225,7 +225,7 @@ that I could understand was this [one](https://doisinkidney.com/posts/2018-09-20
 It seems to be suggesting that one of the indices for a type is not in constructor form but is,
 rather, a function.
 
-Looking at the definition of `_⊢_` we see that the ```v_`` constructor is most likely at fault: 
+Looking at the definition of `_⊢_` we see that the `` `v_ `` constructor is most likely at fault: 
 
     `v_ : ∀ {Δ} → (x : Var) → ⦃ i : x ∈ Δ ⦄ → Δ ⊢ !Γ Δ [ i ]
 
