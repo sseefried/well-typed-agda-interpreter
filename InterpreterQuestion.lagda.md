@@ -1,4 +1,6 @@
 <!-- -*-agda2-*- -->
+# A question about writing an η-reduce function for a representation of the Simply Typed Lambda Calculus
+
 First of all, thank you very much for reading this question
 to see if you can help me out. Your time is appreciated.
 
@@ -16,7 +18,7 @@ I have:
   equal and some `instance` declarations so that these can be resolved automatically.
 
 
-# The Interpreter
+## The Interpreter
 
 I present the complete interpreter for the Simply Type Lambda Calculus
 below. On a first reading, you can skip to the section titled "The Question"
@@ -174,7 +176,7 @@ interpret = interpret' []
         interpret' env (`snd p) | f , s     = s
 ```
 
-# The Question
+## The Question
 
 Dr Al-Sibahi's interpreter is very elegant and I'm happy with my modifications to it.
 However, I'd like to be able to do η-reduction on terms. Say we had the following
