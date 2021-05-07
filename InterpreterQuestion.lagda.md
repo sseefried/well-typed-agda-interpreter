@@ -194,13 +194,13 @@ and₂ = `c `∧
 
 I want to write a function called η-reduce that one could prove the following:
 
-pf : η-reduce and₁ ≡ and₂
-pf = refl
+    pf : η-reduce and₁ ≡ and₂
+    pf = refl
 
 This function will eta-reduce when it can, and do nothing when it can't.
 For instance the following should be true:
 
-  η-reduce-constant : ∀ {c} → η-reduce (`c c) ≡ `c c
+    η-reduce-constant : ∀ {c} → η-reduce (`c c) ≡ `c c
 
 However, I get stuck even on this case. Uncomment the definition below and try to 
 type check this module:
