@@ -1,4 +1,12 @@
 {-# OPTIONS --without-K --safe --overlapping-instances #-}
+
+
+-- Reference to check out
+--
+-- Simply Typed Lambda Calculus in Agda, without Shortcuts
+-- https://gergo.erdi.hu/blog/2013-05-01-simply_typed_lambda_calculus_in_agda,_without_shortcuts/
+
+
 module InterpreterWithConstants where
 
 open import Data.Char hiding (_≤_)
@@ -17,6 +25,7 @@ open import Data.Empty
 
 infix 3 _:::_,_
 infix 2 _∈_
+infix 2 _∉_
 
 infix 1 _⊢_
 
@@ -41,6 +50,24 @@ data _≠_ : Var → Var → Set where
   z≠x : z' ≠ x'
   z≠y : z' ≠ y'
 
+instance
+  xy : x' ≠ y'
+  xy = x≠y
+
+  xz : x' ≠ z'
+  xz = x≠z
+
+  yx : y' ≠ x'
+  yx = y≠x
+
+  yz : y' ≠ z'
+  yz = y≠z
+
+  zx : z' ≠ x'
+  zx = z≠x
+
+  zy : z' ≠ y'
+  zy = z≠y
 
 ⟦_⟧ : `Set → Set
 ⟦ `Bool ⟧ = Bool
@@ -54,22 +81,37 @@ data Γ : Set where
 
 data _∈_ :  Var → Γ → Set where
   H  : ∀ {x Δ t } → x ∈ x ::: t , Δ
-  TH : ∀ {x y Δ t } → ⦃ prf : x ∈ Δ ⦄ → ⦃ neprf : x ≠ y ⦄ → x ∈ y ::: t , Δ
+  TH : ∀ {x y Δ t} → ⦃ prf : x ∈ Δ ⦄ → ⦃ neprf : x ≠ y ⦄ → x ∈ y ::: t , Δ
+
+instance
+  ∈_type₁ : ∀ {x Δ t} → x ∈ x ::: t , Δ
+  ∈_type₁ = H
+
+  ∈_type₂ : ∀ {x y Δ t} → ⦃ prf : x ∈ Δ ⦄ → ⦃ x ≠ y ⦄ → x ∈ y ::: t , Δ
+  ∈_type₂ = TH
+
+data _∉_ : Var → Γ → Set where
+  H : ∀ {x} → x ∉ ·
+  TH : ∀ {x y Δ t} → ⦃ prf : x ∉ Δ ⦄ → ⦃ neprf : x ≠ y ⦄ → x ∉ y ::: t , Δ
+
+instance
+  ∉_type₁ : ∀ {x} → x ∉ ·
+  ∉_type₁ = H
+
+  ∉_type₂ : ∀ {x y Δ t} → ⦃ prf : x ∉ Δ ⦄ → ⦃ x ≠ y ⦄ → x ∉ y ::: t , Δ
+  ∉_type₂ = TH
 
 !Γ_[_] : ∀ {x} → (Δ : Γ) → x ∈ Δ → `Set
 !Γ_[_] · ()
 !Γ _ ::: t , Δ [ H ]     = t
 !Γ _ ::: _ , Δ [ TH ⦃ prf = i ⦄ ]  = !Γ Δ [ i ]
 
+
 infix 30 `v_
 infix 30 `c_
-infix 30 `not_
-infix 27 _`∧_
-infix 26 _`∨_
-infix 25 _`xor_
+
 infix 24 _`,_
 infixl 22 _`₋_
-
 
 data Constant : `Set → Set where
   `not           : Constant (`Bool `⇨ `Bool)
@@ -124,34 +166,86 @@ interpret = interpret' []
         interpret' env (`snd p) with interpret' env p
         interpret' env (`snd p) | f , s     = s
 
-instance
-  v_type₁ : ∀ {x Δ t} → x ∈ x ::: t , Δ
-  v_type₁ = H
+-----
 
-  v_type₂ : ∀ {x y Δ t} → ⦃ prf : x ∈ Δ ⦄ → ⦃ x ≠ y ⦄ → x ∈ y ::: t , Δ
-  v_type₂ = TH
+and₁ : · ⊢ `Bool `× `Bool `⇨ `Bool
+and₁ = `λ x' `: `Bool `× `Bool ⇨ `c `∧ `₋ `v x'
 
-instance
-  xy : x' ≠ y'
-  xy = x≠y
+and₂ : · ⊢ `Bool `× `Bool `⇨ `Bool
+and₂ = `c `∧
 
-  xz : x' ≠ z'
-  xz = x≠z
 
-  yx : y' ≠ x'
-  yx = y≠x
+{-
 
-  yz : y' ≠ z'
-  yz = y≠z
+I want to write a function called eta-reduce that one could prove the following:
 
-  zx : z' ≠ x'
-  zx = z≠x
+pf : eta-reduce and₁ ≡ and₂
+pf = refl
 
-  zy : z' ≠ y'
-  zy = z≠y
+This function will eta-reduce when it can, and do nothing when it can't.
+For instance the following should be true:
 
-nand : · ⊢ `Bool `× `Bool `⇨ `Bool
-nand = `λ x' `: `Bool `× `Bool ⇨ `c `not `₋ (`c `∧ `₋ `v x')
+  eta-reduce-constant : ∀ {c} → eta-reduce (`c c) ≡ `c c
 
-test : Set
-test = {! interpret nand !}
+However, I get stuck even on this case. Uncomment the definition below and try to 
+type check this module:
+
+-}
+
+-- eta-reduce : ∀ {t₁ t₂} → · ⊢ t₁ `⇨ t₂ → · ⊢ t₁ `⇨ t₂
+-- eta-reduce (`c c) = ?
+
+{-
+
+You will get the following error message: 
+
+  I'm not sure if there should be a case for the constructor `v_,
+  because I get stuck when trying to solve the following unification
+  problems (inferred index ≟ expected index):
+    Δ ≟ ·
+    !Γ Δ [ i ] ≟ t₁ `⇨ t₂
+  when checking the definition of eta-reduce
+
+I did a bit of searching on the Internet and the only source I could find
+that I could understand was this one: https://doisinkidney.com/posts/2018-09-20-agda-tips.html
+
+It seems to be suggesting that one of the indices for a type is not in constructor form but is,
+rather, a function.
+
+Looking at the definition of _⊢_ we see that the `v_` constructor is most likely at fault: 
+
+  `v_ : ∀ {Δ} → (x : Var) → ⦃ i : x ∈ Δ ⦄ → Δ ⊢ !Γ Δ [ i ]
+
+The result type is `Δ ⊢ !Γ Δ [ i ]`. Clearly the index `!Γ Δ [ i ]` is referring to a 
+user-defined function.
+
+My question is, "how can I fix this?". How would I modify the _⊢_ data structure 
+
+
+- I would be open to an alternative interpreter for the Simply Typed Lambda Calculus
+- This interpreter is a modified form of this code base. ttps://github.com/ahmadsalim/well-typed-agda-interpreter
+  It has had instance declarations added and the syntactic form of terms has changed a little. I pulled out
+  the constant functions into their own data structure called `Constant` and changed their types a little to work
+  on products (_×_) instead of a curried form.
+
+
+-}
+
+
+
+
+{-
+The instance based searching for _∈_ proofs might be a problem. I'm uncomfortable
+with the use of --overlapping-instances
+
+
+
+
+-}
+
+-- eta-reduce : ∀ {t₁ t₂} → · ⊢ t₁ `⇨ t₂ → · ⊢ t₁ `⇨ t₂
+-- eta-reduce (`λ x `: _ ⇨ f `₋ y) = {!!}
+-- eta-reduce t = t
+
+
+
