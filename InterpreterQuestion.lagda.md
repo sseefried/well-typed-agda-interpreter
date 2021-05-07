@@ -4,6 +4,8 @@
 First of all, thank you very much for reading this question
 to see if you can help me out. Your time is appreciated.
 
+I've run into a unification problem with Agda and I'm at a loss as to how to resolve it.
+
 This module contains an interpreter for the Simply Type Lambda Calculus
 initially written by Ahmad Salim Al-Sibahi [here](https://github.com/ahmadsalim/well-typed-agda-interpreter).
 
@@ -232,3 +234,6 @@ user-defined function.
 
 My question is, "how can I fix this?". How would I modify the `_⊢_` data structure or
 the presentation of this interpreter in general so that I could write an `η-reduce` function?
+
+I do appreciate that the `η-reduce` function may require some notion of "variable x is not free in Δ"
+or some such but I have few ideas about how to implement such a thing.
