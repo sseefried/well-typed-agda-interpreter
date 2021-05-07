@@ -13,8 +13,8 @@ I have:
 - updated it to work with Agda in 2021
 - added some `instance` declarations to resolve `_∈_` proofs.
 - added the `--overlapping-instances` option to the `OPTIONS` pragma.
-- Pulled out constant functions such as ```_∧_`` into their own data structure
-  called `Constant` and added a constructor ```c`` to the `_⊢_` data structure
+- Pulled out constant functions such as `` `_∧_` ` into their own data structure
+  called `Constant` and added a constructor `` `c `` to the `_⊢_` data structure
   to embed them in terms.
 - Added a variable type (`Var`), a data structure to prove that two variables are not
   equal and some `instance` declarations so that these can be resolved automatically.
