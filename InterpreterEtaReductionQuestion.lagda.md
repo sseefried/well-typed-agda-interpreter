@@ -1,6 +1,6 @@
 <!-- -*-agda2-*- -->
 
-Hi Dr. Al-Sabahi,
+Hi Dr. Al-Sibahi,
 
 I am writing to you again because I think you might be the only
 person who can help me with a problem I've having. I really want
