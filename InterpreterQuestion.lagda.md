@@ -133,7 +133,7 @@ data Constant : `Set → Set where
 data _⊢_ : Γ → `Set → Set where
   `false           : ∀ {Δ} → Δ ⊢ `Bool
   `true            : ∀ {Δ} → Δ ⊢ `Bool
-  `v_              : ∀ {Δ} → (x : Var) → ⦃ i : x ∈ Δ ⦄ → Δ ⊢ !Γ Δ [ i ]
+  `v_              : ∀ {Δ t} → (x : Var) → ⦃ i : x ∈ Δ ⦄ → ⦃ t ≡ !Γ Δ [ i ] ⦄ → Δ ⊢ t
   `c_              : ∀ {Δ t} → Constant t → Δ ⊢ t
   _`₋_             : ∀ {Δ t s} → Δ ⊢ t `⇨ s → Δ ⊢ t → Δ ⊢ s --application
   `λ_`:_⇨_         : ∀ {Δ tr} → (x : Var) → (tx : `Set)
@@ -167,7 +167,7 @@ interpret = interpret' []
         interpret' env `true                = true
         interpret' env `false               = false
         interpret' env `tt                  = tt
-        interpret' env ((`v x) ⦃ i = idx ⦄) = ! env [ idx ]
+        interpret' env ((`v x) ⦃ i = idx ⦄ ⦃ refl ⦄ ) = ! env [ idx ]
         interpret' env (f `₋ x)             = (interpret' env f) (interpret' env x)
         interpret' env (`λ _ `: tx ⇨ body)  = λ (x : ⟦ tx ⟧) → interpret' (x ∷ env) body
         interpret' env (`c f)               = interpretConstant f
@@ -186,7 +186,7 @@ two definitions:
 
 ```
 and₁ : · ⊢ `Bool `× `Bool `⇨ `Bool
-and₁ = `λ x' `: `Bool `× `Bool ⇨ `c `∧ `₋ `v x'
+and₁ = `λ x' `: `Bool `× `Bool ⇨ `c `∧ `₋ `v x' 
 
 and₂ : · ⊢ `Bool `× `Bool `⇨ `Bool
 and₂ = `c `∧
@@ -206,8 +206,14 @@ However, I get stuck even on this case. Uncomment the definition below and try t
 type check this module:
 
 ```
--- eta-reduce : ∀ {t₁ t₂} → · ⊢ t₁ `⇨ t₂ → · ⊢ t₁ `⇨ t₂
--- eta-reduce (`c c) = ?
+eta-reduce : ∀ {t₁ t₂} → · ⊢ t₁ `⇨ t₂ → · ⊢ t₁ `⇨ t₂
+eta-reduce (`c c) = `c c
+eta-reduce (f `₋ x) = f `₋ x
+eta-reduce (`fst x) = `fst x
+eta-reduce (`snd x) = `snd x
+eta-reduce (`λ x `: _ ⇨ f `₋ (`v y)) with x ≡ y
+... | ⊤ = ?
+eta-reduce (`λ x `: t ⇨ body) = `λ x `: _ ⇨ body
 ```
 
 You will get the following error message: 
