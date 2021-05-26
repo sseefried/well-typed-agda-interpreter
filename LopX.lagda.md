@@ -651,17 +651,11 @@ instance
   shift-c {y = y} {s = s} ⦃ prf = prf ⦄ = shift y s prf
 
 
-toEnd′ : (x : Var) → (t : `Set) → (Δ : Γ) → Δ [ x ::: t ]
-toEnd′ x t · = end x t
-toEnd′ x t (y ::: s , Δ) = shift y s (toEnd′ x t Δ)
-
 toΓ : ∀ {Δ x t} → Δ [ x ::: t ] → Γ
 toΓ (end x t) = x ::: t , ·
 toΓ (shift y s endΓ) = y ::: s , toΓ endΓ
 
 
-test-toEnd′ : Set
-test-toEnd′ = {! toEnd′ x' `Bool (z' ::: `Bool , (y' ::: `⊤ , ·))  !}
 ```
 
 I want a function that given a `y ∈ Δ` and `Δ [ x ::: t ]` gives us a `y ∈ toΓ [ x ::: t ]`
@@ -685,21 +679,34 @@ toExt-Γ ⦃ shift y s Δ ⦄ ⦃ TH ⦃ prf ⦄ ⦄ = toExt-Γ ⦃ Δ ⦄ ⦃ p
 Wow, also can't believe I got that proof out. Woohoo! 
 
 ```
-lop-x : ∀ {x y t s Δ}
+lop-x-var : ∀ {x y t s Δ}
+      → ⦃ Δ′ : Δ [ x ::: t ] ⦄
+      → (e : (toΓ Δ′) ⊢ s)
+      → ⦃ i : y ∈ Δ ⦄
+      → ⦃ eq : s ≡ !Γ Δ [ i ] ⦄
+      → ⦃ eq : s ≡ !Γ (toΓ Δ′) [ i y∈Δ→y∈toΓΔ Δ′ ] ⦄ -- I don't know why I need this.
+      → ⦃ isVar :  e ≡ (`v y) ⦃ i = i y∈Δ→y∈toΓΔ Δ′ ⦄ ⦃ eq = eq ⦄ ⦄
+      → Δ ⊢ s
+lop-x-var {x} {y} (`v _) = `v y
+
+test-arg :  z' ::: `Bool , (y' ::: `⊤ , (y' ::: `Bool , ·)) ⊢ `⊤
+test-arg = `v y'
+
+test-lop-x : z' ::: `Bool , (y' ::: `⊤ , ·) ⊢ `⊤
+test-lop-x = lop-x-var test-arg 
+
+```
+
+I'd have prefered this version here:
+
+lop-x-var : ∀ {x y t s Δ}
       → ⦃ Δ′ : Δ [ x ::: t ] ⦄
       → (e : (toΓ Δ′) ⊢ s)
       → ⦃ i : y ∈ Δ ⦄
       → ⦃ eq : s ≡ !Γ Δ [ i ] ⦄
       → ⦃ isVar :  e ≡ (`v y) ⦃ i = i y∈Δ→y∈toΓΔ Δ′ ⦄ ⦃ eq = toExt-Γ eq ⦄ ⦄
       → Δ ⊢ s
-lop-x {x} {y} (`v _) = `v y
+lop-x-var {x} {y} (`v _) = `v y
 
-test-arg :  z' ::: `Bool , (y' ::: `⊤ , (y' ::: `Bool , ·)) ⊢ `⊤
-test-arg = `v y'
+but it causes Agda to go into a type-check loop.
 
-test-lop-x : z' ::: `Bool , (y' ::: `⊤ , ·) ⊢ `⊤
-test-lop-x = lop-x test-arg
-```
-
-
-Holy shit I cannot believe I managed to write `lop-x` succesfully! Look at it go! 
