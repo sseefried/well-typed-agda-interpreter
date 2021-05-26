@@ -676,20 +676,28 @@ H  y∈Δ→y∈toΓΔ (shift y s Δ) = H
 Wow, I can't believe I got that proof out. Now to see if I can generalise `lop-x`
 
 ```
+toExt-Γ : ∀ {x y t s Δ}  → ⦃ Δ′ : Δ [ x ::: t ] ⦄ → ⦃ i : y ∈ Δ ⦄ → (s ≡ !Γ Δ [ i ]) → s ≡ !Γ (toΓ Δ′) [ i y∈Δ→y∈toΓΔ Δ′ ]
+toExt-Γ ⦃ end x t ⦄ ⦃ ⦄  refl
+toExt-Γ ⦃ shift y s Δ ⦄ ⦃ H ⦄ refl = refl
+toExt-Γ ⦃ shift y s Δ ⦄ ⦃ TH ⦃ prf ⦄ ⦄ = toExt-Γ ⦃ Δ ⦄ ⦃ prf ⦄
+```
+
+Wow, also can't believe I got that proof out. Woohoo! 
+
+```
 lop-x : ∀ {x y t s Δ}
       → ⦃ Δ′ : Δ [ x ::: t ] ⦄
       → (e : (toΓ Δ′) ⊢ s)
       → ⦃ i : y ∈ Δ ⦄
       → ⦃ eq : s ≡ !Γ Δ [ i ] ⦄
-      → ⦃ eq2 : s ≡ !Γ (toΓ Δ′) [ i y∈Δ→y∈toΓΔ Δ′ ] ⦄
-      → ⦃ isVar :  e ≡ (`v y) ⦃ i = i y∈Δ→y∈toΓΔ Δ′ ⦄ ⦄
+      → ⦃ isVar :  e ≡ (`v y) ⦃ i = i y∈Δ→y∈toΓΔ Δ′ ⦄ ⦃ eq = toExt-Γ eq ⦄ ⦄
       → Δ ⊢ s
 lop-x {x} {y} (`v _) = `v y
 
-test-arg :  z' ::: `Bool , (y' ::: `Bool , (x' ::: `⊤ , ·)) ⊢ `Bool
+test-arg :  z' ::: `Bool , (y' ::: `⊤ , (y' ::: `Bool , ·)) ⊢ `⊤
 test-arg = `v y'
 
-test-lop-x : z' ::: `Bool , (y' ::: `Bool , ·) ⊢ `Bool
+test-lop-x : z' ::: `Bool , (y' ::: `⊤ , ·) ⊢ `⊤
 test-lop-x = lop-x test-arg
 ```
 
