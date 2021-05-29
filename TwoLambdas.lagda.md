@@ -25,6 +25,7 @@ open import Relation.Binary using (Decidable)
 infix 3 _:::_,_
 infix 2 _∈_
 
+
 infix 1 _⊢_
 
 data `Set : Set where
@@ -182,6 +183,11 @@ instance
 data Γ : Set where
   ·         : Γ
   _:::_,_   : Var → `Set → Γ → Γ
+
+-- infix 2 _∉_
+-- data _∉_ : Var → Γ → Set where
+--  D : ∀ {x} → x ∉ ·
+--  DD : ∀ {x y Δ t} → x ∉ Δ → ¬ (x ≡ y) → x ∉ (y ::: t , Δ)
 
 data _∈_ :  Var → Γ → Set where
   H  : ∀ {x Δ t } → x ∈ x ::: t , Δ
@@ -393,10 +399,12 @@ H  y∈Δ→y∈toΓΔ (shift y s Δ) = H
 _y∈toΓΔ→y∈Δ1_ : ∀ {x y t Δ} → ¬ (x ≡ y) → (Δ′ : Δ [ x ::: t ]) → y ∈ toΓ Δ′ → y ∈ Δ
 _y∈toΓΔ→y∈Δ1_ {x} {y} {t} {Δ = ·} ¬x≡y (end .x .t) H with ¬x≡y refl
 ... | ()
-_y∈toΓΔ→y∈Δ1_ ¬x≡y (shift y s (end x t))  H = H -- y ∈ x ::: s , · ---> y ∈ Δ (and x = y)
-_y∈toΓΔ→y∈Δ1_ {x} {y} ¬x≡y (shift y′ s (end _ t)) _ with y ≟ y′
-... | yes refl = H
-... | no _  = {!!} 
+_y∈toΓΔ→y∈Δ1_ {x} {y} ¬x≡y (shift y s (end x t)) H = H
+_y∈toΓΔ→y∈Δ1_ {x} {y} ¬x≡y (shift y′ s (end _ t)) (TH ⦃ H ⦄) with ¬x≡y refl
+...|  ()
+_y∈toΓΔ→y∈Δ1_ {x} {y} ¬x≡y (shift y′ s (end _ t)) (TH ⦃ TH ⦃ () ⦄ ⦄)
+_y∈toΓΔ→y∈Δ1_         ¬x≡y (shift _ _ (shift _ _ _)) H = H
+_y∈toΓΔ→y∈Δ1_ {x} {y} ¬x≡y (shift _ _ (shift z u Δ′)) (TH ⦃ y∈Δ ⦄)  = TH ⦃ _y∈toΓΔ→y∈Δ1_ ¬x≡y (shift z u Δ′) y∈Δ ⦄
 
 toExt-Γ : ∀ {x y t s Δ}  → ⦃ Δ′ : Δ [ x ::: t ] ⦄ → ⦃ i : y ∈ Δ ⦄ → ¬ (x ≡ y) → (s ≡ !Γ Δ [ i ]) → s ≡ !Γ (toΓ Δ′) [ i y∈Δ→y∈toΓΔ Δ′ ]
 toExt-Γ ⦃ end x t ⦄ ⦃ ⦄  _ refl
