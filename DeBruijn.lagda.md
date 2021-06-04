@@ -168,7 +168,7 @@ eta-reduce (`c c) = `c c
 eta-reduce (f `₋ x) = f `₋ x
 eta-reduce (`fst x) = `fst x
 eta-reduce (`snd x) = `snd x
-eta-reduce lam@(`ƛ (f `₋ ` Z)) = ?
+eta-reduce lam@(`ƛ (f `₋ ` Z)) = {!!}
 eta-reduce (`ƛ body) = `ƛ body
 
 ```
