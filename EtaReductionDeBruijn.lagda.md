@@ -195,8 +195,8 @@ drop `tt = just `tt
 
 Finally, we introduce the `eta-reduce` function which looks for terms
 of the form `` `ƛ (f `₋ (` Z)) `` and eta-reduces them when variable
-`` ` Z `` is not free in `f`. This corresponds to `drop` return a
-`just` value.
+`` ` Z `` is not free in `f`. This corresponds to the case where
+`drop` returns a `just` value.
 
 
 ```
