@@ -162,10 +162,9 @@ dropVar {suc _} {Δ = _ , Δ} {p = s≤s p} (S n)
 dropVar {suc _} {Δ = _ , Δ} {s≤s p} Z          = just Z
 ```
 
-Function `drop` now makes use of `dropVar` to re-type a
-term whose environment contains an unrequired type.
-Returns `nothing` when the inserted type is actually
-required.
+Function `drop` now makes use of `dropVar` to re-type a term whose
+environment contains an unrequired type that has been inserted.
+Returns `nothing` when the inserted type is actually required.
 
 ```
 drop : ∀ {i s t Δ p} → insert {i} s Δ p ⊢ t → Maybe (Δ ⊢ t)
