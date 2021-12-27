@@ -366,16 +366,6 @@ x nfiD `tt                                   = yes nfi-tt
 
 ```
 
-
-```
-lam-ex-1 : · ⊢ `Bool `⇨ `Bool
-lam-ex-1 = (`λ y' `: `Bool ⇨ (`c `not)) `₋ `true
-
-lam-ex-2 : x' ::: `⊤ , · ⊢ `Bool `⇨ `Bool
-lam-ex-2 = (`λ y' `: `Bool ⇨ `c `not) `₋ `true
-
-```
-
 ```
 reduceEnv : ∀ {x t s Δ} → (e : (x ::: s , Δ ⊢ t)) → x nfi e → Δ ⊢ t
 reduceEnv `true nfi-true                               = `true 
@@ -434,3 +424,274 @@ i₁ = {! interpret ex₁ !}
 i₂ : Bool → Bool
 i₂ = {! interpret ex₂ !}
 ```
+
+
+# Exploring how one term can be reconstructed as another.
+
+The following two terms type-check. But how could I
+convert `lam-ex-2` into `lam-ex-1`. Let's look at how
+`lam-ex-2` gets type checked in the first place.
+
+```
+lam-ex-1 : · ⊢ `Bool `⇨ `Bool
+lam-ex-1 = (`λ y' `: `Bool ⇨ (`c `not)) `₋ `true
+
+lam-ex-2 : x' ::: `⊤ , · ⊢ `Bool `⇨ `Bool
+lam-ex-2 = (`λ y' `: `Bool ⇨ `c `not) `₋ `true
+
+```
+
+Looking at the `` _‵₋_ `` constructor we see that the following two terms
+need to type check
+
+```
+lam-ex-2-app-fun : x' ::: `⊤ , · ⊢ `Bool `⇨ `Bool `⇨ `Bool
+lam-ex-2-app-fun = (`λ y' `: `Bool ⇨ `c `not)
+
+lam-ex-2-app-arg : x' ::: `⊤ , · ⊢ `Bool
+lam-ex-2-app-arg = `true
+```
+
+
+Looking at the `` `λ_`:_⇨_ `` constructor we see that `lam-ex-2-app-fun` requires that
+the following term type checks:
+
+```
+lam-ex-2-app-fun-body : y' ::: `Bool , (x' ::: `⊤ , ·) ⊢ `Bool `⇨ `Bool
+lam-ex-2-app-fun-body = `c `not
+```
+
+However, if we were to reconstruct `lam-ex-1` we'd have to start with:
+
+```
+lam-ex-1-app-fun-body : y' ::: `Bool ,  · ⊢ `Bool `⇨ `Bool
+lam-ex-1-app-fun-body = `c `not
+
+lam-ex-1-app-fun : · ⊢ `Bool `⇨ `Bool `⇨ `Bool
+lam-ex-1-app-fun = (`λ y' `: `Bool ⇨ lam-ex-1-app-fun-body)
+```
+
+Then
+
+```
+lam-ex-1-app-arg : · ⊢ `Bool
+lam-ex-1-app-arg = `true
+```
+
+And the finally we get `lam-ex-1`.
+
+```
+lam-ex-1-reconstructed : · ⊢ `Bool `⇨ `Bool
+lam-ex-1-reconstructed = lam-ex-1-app-fun `₋ lam-ex-1-app-arg
+```
+
+The crucial step seems to be the difference between
+`lam-ex-2-app-fun-body` and `lam-ex-1-app-fun-body`.
+
+The `` x' ::: `⊤ `` is not out the front of the environment.
+It is at the end. We need to contract from `y' ::: `Bool , (x' ::: `⊤ , ·)`
+to `y' ::: `Bool ,  ·`.
+
+However for `lam-ex-2-app-fun` and `lam-ex-2-app-arg` we are just stripping
+off the front.
+
+It feels like I'm going to have to come up with a notion of a "environment prefix".
+
+For instance `` x' ::: `⊤ , · `` would be an environment prefix of
+`` y' ::: `Bool , (x' ::: `⊤ , ·) `` and also `` y' ::: ‵Bool , (z' ::: `⊤ , (x' ::: `⊤ , ·)) ``
+
+
+----
+
+The following function _is_ eta-reducible. In fact, it can be eta-reduced
+twice.
+
+```
+is-eta-reducible : · ⊢ `Bool `⇨ `Bool
+is-eta-reducible = `λ x' `: `Bool ⇨ (`λ y' `: `Bool ⇨ `c `not `₋ `v y') `₋ `v x'
+
+is-eta-reducible-nested : · ⊢ `Bool `⇨ `Bool
+is-eta-reducible-nested = `λ y' `: `Bool ⇨ `c `not `₋ `v y'
+
+fully-eta-reduced : · ⊢ `Bool `⇨ `Bool
+fully-eta-reduced = `c `not
+```
+
+Notice how `` x' ::: `Bool `` is not required in the environment for `is-eta-reducible-nested`?
+This will be important for later.
+
+Okay, now I want to look at situations where it's important that `x` is not free in an expression.
+The function `not-eta-reducible` below is, as its name says, not eta-reducible. The reason
+is that `x` is not free in ``λ y' `: `Bool ⇨ `c `not `₋ `v x'`.
+
+```
+not-eta-reducible : · ⊢ `Bool `⇨ `Bool
+not-eta-reducible = `λ x' `: `Bool ⇨ (`λ y' `: `Bool ⇨ `c `not `₋ `v x') `₋ `v x'
+
+```
+
+The smallest type of the nested lambda is: 
+
+```
+not-eta-reducible-nested : x' ::: `Bool , · ⊢ `Bool `⇨ `Bool
+not-eta-reducible-nested = `λ y' `: `Bool ⇨ `c `not `₋ `v x'
+```
+
+However we cannot remove the `x'` from the environment as it is free in
+the expression.
+
+The following just doesn't type check.
+
+```
+-- not-eta-reducible-nested-2 : · ⊢ `Bool `⇨ `Bool
+-- not-eta-reducible-nested-2 = `λ y' `: `Bool ⇨ `c `not `₋ `v x'
+```
+
+
+Let's see what would happen if we tried to eta-reduce `non-eta-reducible`. Where should
+we stop and say "this is wrong"? I think it's clear that as soon as we realise that
+`` x' ::: `Bool `` is required in the environment for `not-eta-reducible-nested` we
+should stop.
+
+But how do we actually discover this?
+
+Eventually we would get down to the the expression
+
+```
+not-eta-reducible-nested-body-app-arg : x' ::: `Bool , · ⊢ `Bool
+not-eta-reducible-nested-body-app-arg = `v x'
+```
+
+x is free in this expression. It's then free in this expression:
+
+```
+not-eta-reducible-nested-body-app : x' ::: `Bool , · ⊢ `Bool
+not-eta-reducible-nested-body-app = `c `not `₋ `v x'
+```
+
+If the binder was `` `λ x' `: `Bool `` and not `` `λ y' `: `Bool ``
+then x' would not be free.
+
+```
+not-eta-reducible-nested-body-app--bound-by-λx' : · ⊢ `Bool `⇨ `Bool
+not-eta-reducible-nested-body-app--bound-by-λx' = `λ x' `: `Bool ⇨ `c `not `₋ `v x'
+```
+
+------
+
+I'd now just like to look at two nested lambdas
+
+
+```
+lam-ex2-1 : x' ::: `⊤ , · ⊢ `Bool `⇨ `Bool
+lam-ex2-1 = `λ y' `: `Bool ⇨ (`λ z' `: `Bool ⇨ `c `not `₋ `v z') `₋ `v y'
+
+lam-ex2-1-body : y' ::: `Bool , (x' ::: `⊤ , ·) ⊢ `Bool
+lam-ex2-1-body = (`λ z' `: `Bool ⇨ `c `not `₋ `v z') `₋ `v y'
+
+-- neither y' nor x' required in environment
+lam-ex2-1-body-appfun : y' ::: `Bool , (x' ::: `⊤ , ·) ⊢ `Bool `⇨ `Bool
+lam-ex2-1-body-appfun = (`λ z' `: `Bool ⇨ `c `not `₋ `v z')
+
+-- only x' not required in environment
+lam-ex2-1-body-apparg : y' ::: `Bool , (x' ::: `⊤ , ·) ⊢ `Bool
+lam-ex2-1-body-apparg = `v y'
+
+lam-ex2-1-body-appfun-body : z' ::: `Bool , (y' ::: `Bool , (x' ::: `⊤ , ·)) ⊢ `Bool
+lam-ex2-1-body-appfun-body = `c `not `₋ `v z'
+
+lam-ex2-1-body-appfun-body-appfun : z' ::: `Bool , (y' ::: `Bool , (x' ::: `⊤ , ·)) ⊢ `Bool `⇨ `Bool
+lam-ex2-1-body-appfun-body-appfun = `c `not 
+
+lam-ex2-1-body-appfun-body-apparg : z' ::: `Bool , (y' ::: `Bool , (x' ::: `⊤ , ·)) ⊢ `Bool 
+lam-ex2-1-body-appfun-body-apparg = `v z'
+
+```
+
+
+So I do want a function which can just lop off the last `` x' ::: `⊤  ``
+
+Now I want to think about the evidence that would be required to do such a thing.
+
+
+
+Let's look at three differnt "lop-x" functions below that remove an x "at the end" of the environment
+
+```
+lop-x1 : ∀ {x y t s Δ} → (e : (x ::: t , Δ) ⊢ s) → ⦃ i : y ∈ Δ ⦄ → ⦃ eq : s ≡ !Γ Δ [ i ] ⦄ → ⦃ y-ne-x : y ≠ x ⦄ → ⦃ e ≡ `v y ⦄  → Δ ⊢ s
+lop-x1 {x} {y} (`v _) = `v y
+
+lop-x2 : ∀ {x y z t s u Δ} →  (e : (z ::: u , (x ::: t , Δ)) ⊢ s)
+                           → ⦃ i : y ∈ (x ::: t , Δ) ⦄
+                           → ⦃ eq : s ≡ !Γ (x ::: t , Δ) [ i ] ⦄
+                           → ⦃ i2 : y ∈ Δ ⦄
+                           → ⦃ eq2 : s ≡ !Γ  Δ [ i2 ] ⦄
+                           → ⦃ y-ne-z : y ≠ z ⦄
+                           → ⦃ e ≡ `v y ⦄
+                           → (z ::: u , Δ) ⊢ s
+lop-x2 {x} {y} (`v _) = `v y
+
+lop-x3 : ∀ {x y z w t s u v Δ} →  (e : y ::: s , (z ::: u , (w ::: v , (x ::: t , Δ))) ⊢ s) → ⦃ e ≡ `v y ⦄  → y ::: s , (z ::: u , (w ::: v , Δ)) ⊢ s
+lop-x3 {x} {y} (`v _) = `v y
+
+```
+
+They all nicely type-check. But how the hell would I generalise this?
+
+```
+data _[_:::_] : Γ → Var → `Set → Set where
+  end   : (x : Var) → (t : `Set) →  · [ x ::: t ]
+  shift : ∀ {Δ x t} → (y : Var) → (s : `Set) → Δ [ x ::: t ] → (y ::: s , Δ) [ x ::: t ]
+
+instance
+  end-c : {x : Var} → {t : `Set} →  · [ x ::: t ]
+  end-c {x} {t} = end x t
+
+  shift-c : ∀ {Δ x t} → {y : Var} → {s : `Set} → ⦃ prf : Δ [ x ::: t ] ⦄ → (y ::: s , Δ) [ x ::: t ]
+  shift-c {y = y} {s = s} ⦃ prf = prf ⦄ = shift y s prf
+
+
+toEnd′ : (x : Var) → (t : `Set) → (Δ : Γ) → Δ [ x ::: t ]
+toEnd′ x t · = end x t
+toEnd′ x t (y ::: s , Δ) = shift y s (toEnd′ x t Δ)
+
+toΓ : ∀ {Δ x t} → Δ [ x ::: t ] → Γ
+toΓ (end x t) = x ::: t , ·
+toΓ (shift y s endΓ) = y ::: s , toΓ endΓ
+
+
+test-toEnd′ : Set
+test-toEnd′ = {! toEnd′ x' `Bool (z' ::: `Bool , (y' ::: `⊤ , ·))  !}
+```
+
+I want a function that given a `y ∈ Δ` and `Δ [ x ::: t ]` gives us a `y ∈ toΓ [ x ::: t ]`
+
+```
+_y∈Δ→y∈toΓΔ_ : ∀ {x y t Δ} → y ∈ Δ → (Δ′ : Δ [ x ::: t ]) → y ∈ toΓ Δ′
+() y∈Δ→y∈toΓΔ (end x t) 
+H  y∈Δ→y∈toΓΔ (shift y s Δ) = H
+(TH ⦃ prf = y∈Δ ⦄) y∈Δ→y∈toΓΔ (shift y s Δ) = TH ⦃ prf = y∈Δ y∈Δ→y∈toΓΔ Δ ⦄ 
+```
+
+Wow, I can't believe I got that proof out. Now to see if I can generalise `lop-x`
+
+```
+lop-x : ∀ {x y t s Δ}
+      → ⦃ Δ′ : Δ [ x ::: t ] ⦄
+      → (e : (toΓ Δ′) ⊢ s)
+      → ⦃ i : y ∈ Δ ⦄
+      → ⦃ eq : s ≡ !Γ Δ [ i ] ⦄
+      → ⦃ eq2 : s ≡ !Γ (toΓ Δ′) [ i y∈Δ→y∈toΓΔ Δ′ ] ⦄
+      → ⦃ isVar :  e ≡ (`v y) ⦃ i = i y∈Δ→y∈toΓΔ Δ′ ⦄ ⦄
+      → Δ ⊢ s
+lop-x {x} {y} (`v _) = `v y
+
+test-arg :  z' ::: `Bool , (y' ::: `Bool , (x' ::: `⊤ , ·)) ⊢ `Bool
+test-arg = `v y'
+
+test-lop-x : z' ::: `Bool , (y' ::: `Bool , ·) ⊢ `Bool
+test-lop-x = lop-x test-arg
+```
+
+
+Holy shit I cannot believe I managed to write `lop-x` succesfully! Look at it go! 

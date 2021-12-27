@@ -117,6 +117,48 @@ x≠y→¬x≡y y≠z = λ()
 x≠y→¬x≡y z≠x = λ()
 x≠y→¬x≡y z≠y = λ()
 
+x≡y→¬x≠y : ∀ {x y} → x ≡ y → ¬ (x ≠ y)
+x≡y→¬x≠y refl ()
+
+foo2 : ¬ (x' ≡ y')
+foo2 with x' ≟ y'
+... | yes ()
+... | no ¬x≡y = ¬x≡y
+
+¬x≡y→x≠y : ∀ {x y} → ¬ (x ≡ y) → x ≠ y
+¬x≡y→x≠y {x'} {x'} ¬x≡x with ¬x≡x refl
+... | () 
+
+¬x≡y→x≠y {x'} {y'} _ with x' ≟ y'
+... | yes ()
+... | no _ = x≠y
+
+¬x≡y→x≠y {x'} {z'} _ with x' ≟ z'
+... | yes ()
+... | no _  = x≠z
+¬x≡y→x≠y {y'} {y'} ¬x≡x with ¬x≡x refl
+... | () 
+
+¬x≡y→x≠y {y'} {x'} _ with y' ≟ x'
+... | yes ()
+... | no _ = y≠x
+
+¬x≡y→x≠y {y'} {z'} _ with y' ≟ z'
+... | yes ()
+... | no _ = y≠z
+¬x≡y→x≠y {z'} {z'} ¬x≡x with ¬x≡x refl
+... | () 
+
+¬x≡y→x≠y {z'} {x'} _ with z' ≟ x'
+... | yes ()
+... | no _ = z≠x
+
+¬x≡y→x≠y {z'} {y'} _ with z' ≟ y'
+... | yes ()
+... | no _ = z≠y
+
+
+
 instance
   xy : x' ≠ y'
   xy = x≠y
@@ -230,9 +272,7 @@ data _nfi_⊢_∋_ : Var → (Δ : Γ) → (t : `Set) → Δ ⊢ t → Set where
   nfi-var    : ∀ {x y Δ t} → ⦃ i : y ∈ Δ ⦄ → ⦃ eq : t ≡ !Γ Δ [ i ] ⦄ → ¬ (x ≡ y) → x nfi Δ ⊢ t ∋ (`v y) ⦃ i ⦄ ⦃ eq ⦄
   nfi-const  : ∀ {x Δ t c} → x nfi Δ ⊢ t ∋ `c c
   nfi-app    : ∀ {x Δ t s f arg} → x nfi Δ ⊢ t `⇨ s ∋ f → x nfi Δ ⊢ t ∋ arg → x nfi Δ ⊢ s ∋ f `₋ arg
-
-
-  nfi-lambda : ∀ {x Δ tx tr e} → x nfi Δ ⊢ tx `⇨ tr ∋ (`λ x `: tx ⇨ e)
+--  nfi-lambda : ∀ {x Δ tx tr e} → x nfi Δ ⊢ tx `⇨ tr ∋ (`λ x `: tx ⇨ e)
   nfi-pair   : ∀ {x Δ t₁ t₂ e₁ e₂} → x nfi Δ ⊢ t₁ ∋ e₁ → x nfi Δ ⊢ t₂ ∋ e₂ → x nfi Δ ⊢ t₁ `× t₂ ∋ e₁ `, e₂
   nfi-fst    : ∀ {x Δ t₁ t₂ e } → x nfi Δ ⊢ t₁ `× t₂ ∋ e → x nfi Δ ⊢ t₁ ∋ `fst e
   nfi-snd    : ∀ {x Δ t₁ t₂ e } → x nfi Δ ⊢ t₁ `× t₂ ∋ e → x nfi Δ ⊢ t₂ ∋ `snd e
@@ -298,8 +338,8 @@ foo refl ()
 ¬nfi-var : ∀ {x y Δ t} → ⦃ i : y ∈ Δ ⦄ → ⦃ eq : t ≡ !Γ Δ [ i ] ⦄ → x ≡ y → ¬ (x nfi Δ ⊢ t ∋ (`v y))
 ¬nfi-var x≡y (nfi-var ¬x≡y) = ¬x≡y x≡y
 
-¬nfi-lambda : ∀ {x y Δ tx tr body} → ¬ (x ≡ y) → ¬ (x nfi Δ ⊢ tx `⇨ tr ∋ (`λ y `: tx ⇨ body))
-¬nfi-lambda {x} {y} ¬x≡x nfi-lambda = ¬x≡x refl
+--¬nfi-lambda : ∀ {x y Δ tx tr body} → ¬ (x ≡ y) → ¬ (x nfi Δ ⊢ tx `⇨ tr ∋ (`λ y `: tx ⇨ body))
+--¬nfi-lambda {x} {y} ¬x≡x nfi-lambda = ¬x≡x refl
 
 _nfiD_ : ∀ {Δ t} → Decidable {A = Var} {B = Δ ⊢ t} _nfi_
 x nfiD `true                                  = yes nfi-true
@@ -312,9 +352,10 @@ x nfiD (f `₋ a) with x nfiD f | x nfiD a
 ... | yes x-nfi-Δ⊢t⇨s∋f | yes x-nfi-Δ⊢t∋a     = yes (nfi-app x-nfi-Δ⊢t⇨s∋f x-nfi-Δ⊢t∋a)
 ... | no ¬x-nfi-Δ⊢t⇨s∋f | _                   = no (¬nfi-app-1 ¬x-nfi-Δ⊢t⇨s∋f)
 ... | _                 | no ¬x-nfi-Δ⊢t∋a     = no (¬nfi-app-2 ¬x-nfi-Δ⊢t∋a)
-x nfiD (`λ y `: _ ⇨ e) with x ≟ y
-... | yes refl                                = yes nfi-lambda
-... | no ¬x≡y                                 = no (¬nfi-lambda ¬x≡y)
+x nfiD (`λ y `: _ ⇨ e) = no λ()
+--x nfiD (`λ y `: _ ⇨ e) with x ≟ y
+--... | yes refl                                = yes nfi-lambda
+--... | no ¬x≡y                                 = no (¬nfi-lambda ¬x≡y)
 x nfiD (e₁ `, e₂) with x nfiD e₁ | x nfiD e₂
 ... | yes x-nfi-Δ⊢t₁∋e₁ | yes x-nfi-Δ⊢t₂∋e₂   = yes (nfi-pair x-nfi-Δ⊢t₁∋e₁ x-nfi-Δ⊢t₂∋e₂)
 ... | no ¬x-nfi-Δ⊢t₁∋e₁ | _                   = no (¬nfi-pair-1 ¬x-nfi-Δ⊢t₁∋e₁)
@@ -332,27 +373,16 @@ x nfiD `tt                                   = yes nfi-tt
 
 
 ```
-contract2 : ∀ {y t₁ t₂ s} → (e : y ::: t₁ , (y ::: s , ·) ⊢ t₂) → y ::: t₁ , · ⊢ t₂
-contract2 `true   = `true
-contract2 `false  = `false
-contract2 ((`v y′) ⦃ i = H ⦄)  = `v y′
-contract2 {y} {t₁} {t₂} {s} ((`v y′) ⦃ i = (TH ⦃ H ⦄ ⦃ ¬y=y′ ⦄) ⦄ ⦃ eq = eq ⦄ ) with t₁ S.≟ t₂
-... | yes refl = `v y
-... | no _ with (x≠y→¬x≡y ¬y=y′) refl
-...              | ()
-contract2 (`c c)  = `c c
-contract2 (f `₋ a) = contract2 f  `₋ contract2 a 
-contract2 {y} {t₁} {t₂} {s} (`λ z `: u ⇨ e′) = {!!} 
+lam-ex-1 : · ⊢ `Bool `⇨ `Bool
+lam-ex-1 = (`λ y' `: `Bool ⇨ (`c `not)) `₋ `true
 
-contract2 {y} {t₁} {t₂} {s} (e₁ `, e₂) = contract2 e₁ `, contract2 e₂ 
-contract2 (`fst e) = `fst (contract2 e)  
-contract2 (`snd e) = `snd (contract2 e) 
-contract2 `tt  = `tt
+lam-ex-2 : x' ::: `⊤ , · ⊢ `Bool `⇨ `Bool
+lam-ex-2 = (`λ y' `: `Bool ⇨ `c `not) `₋ `true
 
 ```
 
 ```
-reduceEnv : ∀ {x t s} → (e : (x ::: s , · ⊢ t)) → x nfi e → · ⊢ t
+reduceEnv : ∀ {x t s Δ} → (e : (x ::: s , Δ ⊢ t)) → x nfi e → Δ ⊢ t
 reduceEnv `true nfi-true                               = `true 
 reduceEnv `false nfi-false                             = `false
 reduceEnv (`v y) (nfi-var ⦃ i = H  ⦄ ¬y≡y) with ¬y≡y refl
@@ -360,13 +390,10 @@ reduceEnv (`v y) (nfi-var ⦃ i = H  ⦄ ¬y≡y) with ¬y≡y refl
 reduceEnv (`v y) (nfi-var ⦃ i = TH ⦄ _)                = `v y
 reduceEnv (`c c) (nfi-const )                          = `c c
 reduceEnv (f `₋ a) (nfi-app x-nfi-f x-nfi-a)           = reduceEnv f x-nfi-f `₋ reduceEnv a x-nfi-a
-reduceEnv (`λ x `: u ⇨ e′) nfi-lambda                  = `λ x `: u ⇨ contract2 e′
 reduceEnv (e₁ `, e₂) (nfi-pair x-nfi-e₁  x-nfi-e₂)     = reduceEnv e₁ x-nfi-e₁ `, reduceEnv e₂ x-nfi-e₂
 reduceEnv (`fst e) (nfi-fst x-nfi-e)                   = `fst (reduceEnv e x-nfi-e)
 reduceEnv (`snd e) (nfi-snd x-nfi-e)                   = `snd (reduceEnv e x-nfi-e)
 reduceEnv `tt nfi-tt                                   = `tt
-
-
 
 eta-reduce : ∀ {t₁ t₂} → · ⊢ t₁ `⇨ t₂ → · ⊢ t₁ `⇨ t₂
 eta-reduce (`c c) = `c c
@@ -377,6 +404,104 @@ eta-reduce {t₁ = t₁} lam@(`λ x `: s ⇨ (f `₋ ((`v_  {t = t₁′} x′) 
 ... | yes refl | yes x-nfi-f | yes refl = reduceEnv f x-nfi-f
 ... | _        | _   | _   = lam
 eta-reduce (`λ x `: _ ⇨ body) = `λ x `: _ ⇨ body
+
+
+ex₁ : · ⊢ `Bool `⇨ `Bool
+ex₁ =  eta-reduce (`λ x' `: `Bool ⇨ (`c `not) `₋ `v x') 
+
+ex₁′ : · ⊢ `Bool `⇨ `Bool
+ex₁′ =  `c `not 
+
+ex₂ : · ⊢ `Bool `⇨ `Bool
+ex₂ = `λ x' `: `Bool ⇨ (`λ y' `: `Bool ⇨ (`c `not)) `₋ `true `₋ `v x'
+
+ex₂′ : · ⊢ `Bool `⇨ `Bool
+ex₂′ = (`λ y' `: `Bool ⇨ (`c `not)) `₋ `true 
+
+pf₁ : eta-reduce ex₁ ≡ ex₁′
+pf₁ = refl
+
+nfi₁ : · ⊢ `Bool `⇨ `Bool
+nfi₁ = (`λ y' `: `Bool ⇨ (`c `not)) `₋ `true
+
+nfi₁-extend : x' ::: `⊤ , · ⊢ `Bool `⇨ `Bool
+nfi₁-extend = (`λ y' `: `Bool ⇨ `c `not) `₋ `true
+
+nfiD-example-1 : Dec (x' nfi · ⊢ (`Bool `⇨ `Bool) ∋ (`c `not))
+nfiD-example-1 =  {! x' nfiD `c `not !}
+
+t₂ : · ⊢ `Bool `⇨ `Bool
+t₂ = {! eta-reduce ex₂ !}
+
+i₁ : Bool → Bool
+i₁ = {! interpret ex₁ !}
+
+i₂ : Bool → Bool
+i₂ = {! interpret ex₂ !}
 ```
 
 
+
+
+
+
+```
+{-
+contract2 : ∀ {y t₁ t₂ s Δ} → (e : y ::: t₁ , (y ::: s , Δ) ⊢ t₂) → y ::: t₁ , Δ ⊢ t₂
+contract2 `true   = `true
+contract2 `false  = `false
+contract2 ((`v y′) ⦃ i = H ⦄)  = `v y′
+contract2 {y} {t₁} {t₂} {s} ((`v y′) ⦃ i = (TH ⦃ H ⦄ ⦃ ¬y=y′ ⦄) ⦄ ⦃ eq = eq ⦄ ) with t₁ S.≟ t₂
+... | yes refl = `v y
+... | no _ with (x≠y→¬x≡y ¬y=y′) refl
+...              | ()
+contract2 ((`v y) ⦃ TH ⦃ prf = TH ⦄ ⦄) = {!!} 
+contract2 (`c c)  = `c c
+contract2 (f `₋ a) = contract2 f  `₋ contract2 a 
+-- contract2 {y} {t₁} {t₂} {s} (`λ z `: u ⇨ e′) with z ≟ y
+-- ... | yes refl = `λ z `: u ⇨ contract2 (doubleReorder e′)
+
+
+contract2 {y} {t₁} {t₂} {s} (e₁ `, e₂) = contract2 e₁ `, contract2 e₂ 
+contract2 (`fst e) = `fst (contract2 e)  
+contract2 (`snd e) = `snd (contract2 e) 
+contract2 `tt  = `tt
+
+reverse : ∀ {x y u t s Δ} →  x ::: u , (y ::: s , Δ) ⊢ t → y ::: s , (x ::: u , Δ) ⊢ t
+reverse `true = `true
+reverse `false = `false
+--reverse {x} {y} {u} {t} {s} ((`v z) ⦃ H ⦄ ⦃ refl ⦄) with x ≟ y
+--... | yes refl with t S.≟ s
+--...             | yes refl = `v x
+--reverse {x} {y} {u} {t} {s} ((`v z) ⦃ H ⦄ ⦃ refl ⦄) | yes refl | no ¬u≡s = `v z
+
+reverse (`c c) = `c c
+reverse (f `₋ a) = reverse f `₋ reverse a
+reverse (`λ z `: w ⇨ e) = {!!} 
+reverse (e₁ `, e₂) = reverse e₁ `, reverse e₂
+reverse (`fst e)  = `fst (reverse e)
+reverse (`snd e) = `snd (reverse e)
+
+
+reverse `tt    = `tt
+
+shuffle : ∀ {x y u t s w Δ} →  y ::: u , (x ::: s , (x ::: w , Δ)) ⊢ t → y ::: u , (x ::: s ,  Δ) ⊢ t
+shuffle _ = {!!} 
+
+contract3 : ∀ {x t₁ t₂ t₃ Δ} → x ::: t₁ , (x ::: t₂ , Δ) ⊢ t₃ → x ::: t₁ , Δ ⊢ t₃
+contract3 `true = `true
+contract3 `false = `false
+contract3 ((`v y) ⦃ H ⦄)  = `v y
+contract3 ((`v y) ⦃ TH ⦃ H ⦄ ⦃ neprf = () ⦄ ⦄)
+contract3 ((`v y) ⦃ TH ⦃ TH ⦃ i ⦄ ⦃ y-ne-x ⦄ ⦄ ⦄) = (`v y) ⦃ i = TH ⦃ i ⦄ ⦃ y-ne-x ⦄ ⦄
+contract3 (`c c) = `c c
+contract3 (f `₋ a) = contract3 f `₋ contract3 a
+contract3 (`λ y `: t ⇨ e) = `λ y `: _  ⇨ shuffle e
+contract3 (e₁ `, e₂) = contract3 e₁ `, contract3 e₂
+contract3 (`fst e)  = `fst (contract3 e)
+contract3 (`snd e) = `snd (contract3 e)
+contract3 `tt = `tt
+
+
+
+-}

@@ -232,3 +232,15 @@ eta-expanded2 = `ƛ (`c `not `₋ ` Z)
 _ : `Bool , `⊤ , · ⊢ `Bool `⇨ `Bool
 _ = eta-reduce eta-expanded2
 ```
+
+
+
+How would we go about capturing the evidence accumulated in a call to
+`dropVar`?
+
+```
+data CanDrop (t : `Set) (s : `Set) : (Δ : Γ) → (i : ℕ) → (p : i N.≤ length Δ) →  t ∈ insert {i} s Δ p → Set where
+  c1 : ∀ {Δ n}       → CanDrop t s Δ zero z≤n (S n)
+  c2 : ∀ {Δ v i p n} → CanDrop t s Δ i p n → CanDrop t s (v , Δ) (suc i) (s≤s p) (S n)
+  c3 : ∀ {Δ i p}     → CanDrop t s (t , Δ) (suc i) (s≤s p) Z
+```

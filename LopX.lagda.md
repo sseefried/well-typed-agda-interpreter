@@ -638,11 +638,28 @@ lop-x3 {x} {y} (`v _) = `v y
 
 They all nicely type-check. But how the hell would I generalise this?
 
+
+The data type below captures the idea of an environment that has variable `x` of type `t`
+"at the end". 
+
 ```
 data _[_:::_] : Γ → Var → `Set → Set where
   end   : (x : Var) → (t : `Set) →  · [ x ::: t ]
   shift : ∀ {Δ x t} → (y : Var) → (s : `Set) → Δ [ x ::: t ] → (y ::: s , Δ) [ x ::: t ]
+```
 
+Here is an example:
+
+```
+at-end-ex1 : · [ x' ::: `Bool ]
+at-end-ex1 = end x' `Bool
+
+at-end-ex2 : (z' ::: `Bool , (y' ::: `⊤ , ·)) [ x' ::: `Bool ]
+at-end-ex2 = shift z' `Bool (shift y' `⊤ (end x' `Bool))
+
+```
+
+```
 instance
   end-c : {x : Var} → {t : `Set} →  · [ x ::: t ]
   end-c {x} {t} = end x t
@@ -684,7 +701,10 @@ lop-x-var : ∀ {x y t s Δ}
       → (e : (toΓ Δ′) ⊢ s)
       → ⦃ i : y ∈ Δ ⦄
       → ⦃ eq : s ≡ !Γ Δ [ i ] ⦄
-      → ⦃ eq : s ≡ !Γ (toΓ Δ′) [ i y∈Δ→y∈toΓΔ Δ′ ] ⦄ -- I don't know why I need this.
+      → ⦃ eq : s ≡ !Γ (toΓ Δ′) [ i y∈Δ→y∈toΓΔ Δ′ ] ⦄
+      -- ^^^ I need this here in order to make the type checker terminate.
+      -- but it would be better if I could write ⦃ eq = i y∈Δ→y∈toΓΔ Δ′ ⦄ in
+      -- isVar parameter below.
       → ⦃ isVar :  e ≡ (`v y) ⦃ i = i y∈Δ→y∈toΓΔ Δ′ ⦄ ⦃ eq = eq ⦄ ⦄
       → Δ ⊢ s
 lop-x-var {x} {y} (`v _) = `v y
@@ -694,6 +714,12 @@ test-arg = `v y'
 
 test-lop-x : z' ::: `Bool , (y' ::: `⊤ , ·) ⊢ `⊤
 test-lop-x = lop-x-var test-arg 
+
+test-arg2 :  z' ::: `Bool , (y' ::: `Bool , ·) ⊢ `Bool
+test-arg2 = `v y'
+
+test-lop-x2 : z' ::: `Bool , · ⊢ `Bool
+test-lop-x2 = lop-x-var test-arg2
 
 ```
 

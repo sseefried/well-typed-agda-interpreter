@@ -1,7 +1,7 @@
 <!-- -*-agda2-*- -->
 
 ```
-module DeBruijn where
+module EtaReductionDeBruijn where
 
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; _≢_; refl)
@@ -144,18 +144,6 @@ interpret = interpret' []
 
 ```
 
-
-Now for some tests:
-
-```
-
-a∧[b∨c] : · ⊢ `Bool `⇨ `Bool `⇨ `Bool `⇨ `Bool
-a∧[b∨c] = `ƛ `ƛ `ƛ `c `∧ `₋ (# 2 `, (`c `∨ `₋ (# 1 `, # 0)))
-
-_ : Bool → Bool → Bool → Bool
-_ = {! interpret a∧[b∨c] !}
-```
-
 ```
 ext : ∀ {Δ Δ′} → (∀ {t} → t ∈ Δ → t ∈ Δ′) → (∀ {t s} → t ∈ s , Δ  → t ∈ s , Δ′)
 ext ρ Z      =  Z
@@ -174,84 +162,21 @@ rename ρ (`ƛ e)         = `ƛ (rename (ext ρ) e)
 rename ρ (`fst e)       = `fst (rename ρ e)
 rename ρ (`snd e)       = `snd (rename ρ e)
 rename ρ `tt             = `tt
-```
 
-t is the index to compare against
-
-```
-module TinD where
-  toℕ : ∀ {Δ t} → t ∈ Δ → ℕ
-  toℕ Z = 0
-  toℕ (S n) = toℕ n
-
-  _≤_ : ∀ {t t′ Δ} → REL (t ∈ Δ) (t′ ∈ Δ) 0ℓ
-  t∈Δ ≤ t′∈Δ = toℕ t∈Δ N.≤ toℕ t′∈Δ
-
-  _<_ : ∀ {t t′ Δ} → REL (t ∈ Δ) (t′ ∈ Δ) 0ℓ
-  t∈Δ < t′∈Δ = toℕ t∈Δ N.< toℕ t′∈Δ
-```
-
-Imagine an environment with a special type inserted.
-e.g.
-
-    t₁ , t₂ , [ t ] , t₄ , ·
-
-
-`t` has been inserted into an environment of length 3 at index 2.
-How might we represent such an environment? And could we contract it back
-to what it was before?
-
-Also, how would we convert from the new data structure back to value of type `Γ`?
-
-I'm going to try to write an `insert` function first:
-
-```
 insert : {i : ℕ} → `Set → (Δ : Γ) → (i N.≤ length Δ) → Γ
-insert {0}     t      Δ   z≤n    = t , Δ
+insert {zero}  t      Δ   z≤n    = t , Δ
 insert {suc _} t (s , Δ) (s≤s n) = s , insert t Δ n
-```
 
-Then we can have a data type that encodes an insertion but
-doesn't actually do it.
+dropVar : ∀ {i s t Δ p} → t ∈ insert {i} s Δ p → Maybe (t ∈ Δ)
+dropVar {zero}  {p = z≤n} Z                    = nothing -- trying to drop the insert variable
+dropVar {zero}  {p = z≤n} (S n)                = just n  -- variable is after insertion point
+dropVar {suc _} {Δ = _ , Δ} {p = s≤s p} (S n)
+  with dropVar n
+... | just t∈Δ                                 = just (S t∈Δ)
+... | nothing                                  = nothing
+dropVar {suc _} {Δ = _ , Δ} {s≤s p} Z          = just Z
 
-
-
-----------
-
-
-Can we type with insert in the type?
-
-```
-_ : · ⊢ `Bool `⇨ `Bool
-_ = `ƛ (`c `not `₋ ` Z)
-
-_ : (insert {0} `Bool · z≤n) ⊢ `Bool `⇨ `Bool
-_ = `ƛ (`c `not `₋ ` Z)
-
-```
-
-Yes we can!
-
-----------
-
-I'm going to create a special version of insert that just puts it at the end.
-
-```
-insertAtEnd : `Set → (Δ : Γ) → Γ
-insertAtEnd t · = t , ·
-insertAtEnd t (s , Δ) = s , insertAtEnd t Δ
-```
-
-```
-dropVar : ∀ {s t Δ} → t ∈ insertAtEnd s Δ → Maybe (t ∈ Δ)
-dropVar {Δ = ·} Z      = nothing
-dropVar {Δ = t , _} Z  = just Z
-dropVar {Δ = _ , Δ} (S n) with dropVar {Δ = Δ} n
-... | just t∈Δ = just (S t∈Δ)
-... | nothing = nothing
-
-
-drop : ∀ {s t Δ} → insertAtEnd s Δ ⊢ t → Maybe (Δ ⊢ t)
+drop : ∀ {i s t Δ p} → insert {i} s Δ p ⊢ t → Maybe (Δ ⊢ t)
 drop `false = just `false
 drop `true = just `true
 drop (`c c) = just (`c c)
@@ -261,7 +186,7 @@ drop (` n) with dropVar n
 drop (f `₋ a) with drop f | drop a
 ... | just f′ | just a′ = just (f′ `₋ a′)
 ... | _       | _       = nothing
-drop {t = t₁ `⇨ _ } {Δ} (`ƛ e) with drop {Δ = t₁ , Δ} e
+drop {i = i} {t = t₁ `⇨ _ } {Δ = Δ} {p = p} (`ƛ e) with drop {i = suc i} {Δ = t₁ , Δ} {p = s≤s p} e
 ... | just e′ = just (`ƛ e′)
 ... | nothing = nothing
 drop (e₁ `, e₂) with drop e₁ | drop e₂
@@ -274,30 +199,20 @@ drop (`snd e) with drop e
 ... | just e′ = just (`snd e′)
 ... | nothing = nothing
 drop `tt = just `tt
-```
 
-Have I just fucking done it have I?
-
-```
-tooBig : `Bool , · ⊢ `Bool
-tooBig = `c `not `₋ ` Z
-
-_ : Maybe (· ⊢  `Bool)
-_ = {! drop {Δ = ·} tooBig !}
-
-```
-
-```
-eta-reduce : ∀ {t₁ t₂} → · ⊢ t₁ `⇨ t₂ → · ⊢ t₁ `⇨ t₂
+eta-reduce : ∀ {t₁ t₂ Δ} → Δ ⊢ t₁ `⇨ t₂ → Δ ⊢ t₁ `⇨ t₂
 eta-reduce (`c c) = `c c
+eta-reduce (` n) = ` n
 eta-reduce (f `₋ x) = f `₋ x
 eta-reduce (`fst x) = `fst x
 eta-reduce (`snd x) = `snd x
-eta-reduce lam@(`ƛ (f `₋ (` Z))) with drop f
+eta-reduce lam@(`ƛ (f `₋ (` Z))) with drop {p = z≤n} f
 ... | just f′ = f′
 ... | nothing = lam
 eta-reduce (`ƛ e) = `ƛ e
 ```
+
+Now for some tests
 
 ```
 eta-expanded : · ⊢ `Bool `⇨ `Bool
@@ -309,13 +224,9 @@ eta-reduced = `c `not
 pf : eta-reduced ≡ eta-reduce (eta-reduce eta-expanded)
 pf = refl
 
-_ : · ⊢ `Bool `⇨ `Bool
-_ = {! eta-reduce eta-expanded !}
+eta-expanded2 : `Bool , `⊤ , · ⊢ `Bool `⇨ `Bool
+eta-expanded2 = `ƛ (`c `not `₋ ` Z)
 
+_ : `Bool , `⊤ , · ⊢ `Bool `⇨ `Bool
+_ = eta-reduce eta-expanded2
 ```
-
-
-TODO:
-
-Write `eta-reduce : ∀ {t₁ t₂ Δ} → Δ ⊢ t₁ `⇨ t₂ → Δ ⊢ t₁ `⇨ t₂`. This
-will require a general use of `insert` not `insertAtEnd`.

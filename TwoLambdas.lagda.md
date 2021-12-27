@@ -45,16 +45,16 @@ module S where
   ¬t⇨s≡t′⇨s′-1 ¬t≡t′ refl = ¬t≡t′ refl -- I really need to grok this before moving on
 
   ¬t⇨s≡t′⇨s′-2 : ∀ {t t′ s s′} → ¬ (s ≡ s′) → ¬ ((t `⇨ s) ≡ (t′ `⇨ s′))
-  ¬t⇨s≡t′⇨s′-2 ¬s≡s′ refl = ¬s≡s′ refl  -- This one too! 
+  ¬t⇨s≡t′⇨s′-2 ¬s≡s′ refl = ¬s≡s′ refl  -- This one too!
 
   `t×s≡t′×s′ : ∀ {t t′ s s′} → t ≡ t′ → s ≡ s′ → (t `× s) ≡ (t′ `× s′)
   `t×s≡t′×s′ refl refl = refl
 
   ¬t×s≡t′×s′-1 : ∀ {t t′ s s′} → ¬ (t ≡ t′) → ¬ ((t `× s) ≡ (t′ `× s′))
-  ¬t×s≡t′×s′-1 ¬t≡t′ refl = ¬t≡t′ refl -- This one too! 
+  ¬t×s≡t′×s′-1 ¬t≡t′ refl = ¬t≡t′ refl -- This one too!
 
   ¬t×s≡t′×s′-2 : ∀ {t t′ s s′} → ¬ (s ≡ s′) → ¬ ((t `× s) ≡ (t′ `× s′))
-  ¬t×s≡t′×s′-2 ¬s≡s′ refl = ¬s≡s′ refl  -- This one too! 
+  ¬t×s≡t′×s′-2 ¬s≡s′ refl = ¬s≡s′ refl  -- This one too!
 
   _≟_ : Decidable {A = `Set} _≡_
   `Bool ≟ `Bool                 = yes refl
@@ -78,7 +78,7 @@ module S where
   (t `× s) ≟ (t′ `× s′) with t ≟ t′ | s ≟ s′
   ... | yes t≡t′ | yes s≡s′     = yes (`t×s≡t′×s′ t≡t′ s≡s′)
   ... | no ¬t≡t′ | _            = no  (¬t×s≡t′×s′-1 ¬t≡t′)
-  ... | _        | no ¬s≡s′     = no  (¬t×s≡t′×s′-2 ¬s≡s′) 
+  ... | _        | no ¬s≡s′     = no  (¬t×s≡t′×s′-2 ¬s≡s′)
 
 data Var : Set where
   x' : Var
@@ -123,7 +123,7 @@ foo2 with x' ≟ y'
 
 ¬x≡y→x≠y : ∀ {x y} → ¬ (x ≡ y) → x ≠ y
 ¬x≡y→x≠y {x'} {x'} ¬x≡x with ¬x≡x refl
-... | () 
+... | ()
 
 ¬x≡y→x≠y {x'} {y'} _ with x' ≟ y'
 ... | yes ()
@@ -133,7 +133,7 @@ foo2 with x' ≟ y'
 ... | yes ()
 ... | no _  = x≠z
 ¬x≡y→x≠y {y'} {y'} ¬x≡x with ¬x≡x refl
-... | () 
+... | ()
 
 ¬x≡y→x≠y {y'} {x'} _ with y' ≟ x'
 ... | yes ()
@@ -143,7 +143,7 @@ foo2 with x' ≟ y'
 ... | yes ()
 ... | no _ = y≠z
 ¬x≡y→x≠y {z'} {z'} ¬x≡x with ¬x≡x refl
-... | () 
+... | ()
 
 ¬x≡y→x≠y {z'} {x'} _ with z' ≟ x'
 ... | yes ()
@@ -292,7 +292,7 @@ x nfiᵇ `false                         = false
 x nfiᵇ (`v y) with x ≟ y
 ...            | yes refl             = true
 ...            | no _                 = false
-x nfiᵇ (`c x₁)                        = false 
+x nfiᵇ (`c x₁)                        = false
 x nfiᵇ (f `₋ a)                       = x nfiᵇ f ∧ x nfiᵇ a
 x nfiᵇ (`λ y `: _ ⇨ body) with x ≟ y
 ...                        | yes refl = true
@@ -306,7 +306,7 @@ x nfiᵇ `tt                            = false
 Here's a type synonym for nfi turning it into a binary relation
 
 ```
--- Type synonym 
+-- Type synonym
 _nfi_ : ∀ {Δ t} → Var → Δ ⊢ t → Set
 _nfi_ {Δ} {t} x e = x nfi Δ ⊢ t ∋ e
 
@@ -335,7 +335,7 @@ Now to write the decidable version
 ¬nfi-snd ¬x-nfi-Δ⊢t₁×t₂∋e (nfi-snd x-nfi-Δ⊢t₁×t₂∋e) = ¬x-nfi-Δ⊢t₁×t₂∋e x-nfi-Δ⊢t₁×t₂∋e
 
 foo : ∀ {x y} → x ≡ y → ¬ (x ≠ y)
-foo refl () 
+foo refl ()
 
 ¬nfi-var : ∀ {x y Δ t} → ⦃ i : y ∈ Δ ⦄ → ⦃ eq : t ≡ !Γ Δ [ i ] ⦄ → x ≡ y → ¬ (x nfi Δ ⊢ t ∋ (`v y))
 ¬nfi-var x≡y (nfi-var ¬x≡y) = ¬x≡y x≡y
@@ -348,7 +348,7 @@ _nfiD_ : ∀ {Δ t} → Decidable {A = Var} {B = Δ ⊢ t} _nfi_
 x nfiD `true                                  = yes nfi-true
 x nfiD `false                                 = yes nfi-false
 x nfiD (`v y) with x ≟ y
-... | yes x≡y                                 = no (¬nfi-var x≡y) 
+... | yes x≡y                                 = no (¬nfi-var x≡y)
 ... | no ¬x≡y                                 = yes (nfi-var ¬x≡y)
 x nfiD (`c c)                                 = yes nfi-const
 x nfiD (f `₋ a) with x nfiD f | x nfiD a
@@ -390,10 +390,21 @@ toΓ : ∀ {Δ x t} → Δ [ x ::: t ] → Γ
 toΓ (end x t) = x ::: t , ·
 toΓ (shift y s endΓ) = y ::: s , toΓ endΓ
 
+data _∈⟨_[_:::_]⟩_ : Var → (Δ : Γ) → (x : Var) → (tx : `Set) → Δ [ x ::: tx ] → Set where
+ H  : ∀ {x y tx ty Δ} → {Δᵉ : Δ [ x ::: tx ]} → y ∈⟨ (y ::: ty , Δ) [ x ::: tx ]⟩ (shift y ty Δᵉ)
+ TH : ∀ {x y z tx tz Δ} → {Δᵉ : Δ [ x ::: tx ]} → ⦃ prf : y ∈⟨ Δ [ x ::: tx ]⟩ Δᵉ ⦄ → ⦃ neprf : y ≠ z ⦄ → y ∈⟨ (z ::: tz , Δ) [ x ::: tx ]⟩ (shift z tz Δᵉ)
+
+instance
+  H-c : ∀ {x y tx ty Δ} → {Δᵉ : Δ [ x ::: tx ]} → y ∈⟨ (y ::: ty , Δ) [ x ::: tx ]⟩ (shift y ty Δᵉ)
+  H-c = H
+
+  TH-c : ∀ {x y z tx tz Δ} → {Δᵉ : Δ [ x ::: tx ]} → ⦃ prf : y ∈⟨ Δ [ x ::: tx ]⟩ Δᵉ ⦄ → ⦃ neprf : y ≠ z ⦄ → y ∈⟨ (z ::: tz , Δ) [ x ::: tx ]⟩ (shift z tz Δᵉ)
+  TH-c = TH
+
 _y∈Δ→y∈toΓΔ_ : ∀ {x y t Δ} → y ∈ Δ → (Δ′ : Δ [ x ::: t ]) → y ∈ toΓ Δ′
 () y∈Δ→y∈toΓΔ (end x t)  -- y ∈ · → y ∈ x ::: t , ·
-H  y∈Δ→y∈toΓΔ (shift y s Δ) = H 
-(TH ⦃ prf = y∈Δ ⦄) y∈Δ→y∈toΓΔ (shift y s Δ) = TH ⦃ prf = y∈Δ y∈Δ→y∈toΓΔ Δ ⦄ 
+H  y∈Δ→y∈toΓΔ (shift y s Δ) = H
+(TH ⦃ prf = y∈Δ ⦄) y∈Δ→y∈toΓΔ (shift y s Δ) = TH ⦃ prf = y∈Δ y∈Δ→y∈toΓΔ Δ ⦄
 
 
 _y∈toΓΔ→y∈Δ1_ : ∀ {x y t Δ} → ¬ (x ≡ y) → (Δ′ : Δ [ x ::: t ]) → y ∈ toΓ Δ′ → y ∈ Δ
@@ -406,33 +417,64 @@ _y∈toΓΔ→y∈Δ1_ {x} {y} ¬x≡y (shift y′ s (end _ t)) (TH ⦃ TH ⦃ (
 _y∈toΓΔ→y∈Δ1_         ¬x≡y (shift _ _ (shift _ _ _)) H = H
 _y∈toΓΔ→y∈Δ1_ {x} {y} ¬x≡y (shift _ _ (shift z u Δ′)) (TH ⦃ y∈Δ ⦄)  = TH ⦃ _y∈toΓΔ→y∈Δ1_ ¬x≡y (shift z u Δ′) y∈Δ ⦄
 
+
+-∈⟨⟩-∈-> : ∀ {x y t Δ} → {Δᵉ : Δ [ x ::: t ]} → y ∈⟨ Δ [ x ::: t ]⟩ Δᵉ → y ∈ Δ
+-∈⟨⟩-∈-> H = H
+-∈⟨⟩-∈-> (TH ⦃ prf ⦄)  = TH ⦃ -∈⟨⟩-∈-> prf ⦄
+
+
 toExt-Γ : ∀ {x y t s Δ}  → ⦃ Δ′ : Δ [ x ::: t ] ⦄ → ⦃ i : y ∈ Δ ⦄ → ¬ (x ≡ y) → (s ≡ !Γ Δ [ i ]) → s ≡ !Γ (toΓ Δ′) [ i y∈Δ→y∈toΓΔ Δ′ ]
 toExt-Γ ⦃ end x t ⦄ ⦃ ⦄  _ refl
 toExt-Γ ⦃ shift y s Δ ⦄ ⦃ H ⦄ _ refl = refl
 toExt-Γ ⦃ shift y s Δ ⦄ ⦃ TH ⦃ prf ⦄ ⦄ ¬x≡y s≡!ΓΔ[i] = toExt-Γ ⦃ Δ ⦄ ⦃ prf ⦄ ¬x≡y s≡!ΓΔ[i]
 
 fromExt-Γ : ∀ {x y t s Δ} →  ⦃ Δ′ : Δ [ x ::: t ] ⦄ → ⦃ i : y ∈ toΓ Δ′ ⦄ → (¬x≡y : ¬ (x ≡ y)) → s ≡ !Γ (toΓ Δ′) [ i  ] → (s ≡ !Γ Δ [ _y∈toΓΔ→y∈Δ1_ ¬x≡y Δ′  i ])
-fromExt-Γ = {!!} 
+fromExt-Γ = {!!}
 
 ```
 
 ------------------------------
 
 ```
+
+firstPf : ∀ {x tx t Δ} → (e : x ::: tx , Δ ⊢ t) → ⦃ eq : ¬ (t ≡ tx)  ⦄ → ¬ (e ≡ (`v x))
+firstPf  = ?
+
+
+```
+
+```
+contract : ∀ {x tx t s Δ Δₓ} → {Δᵉ : (x ::: tx , Δ) [ x ::: s ]} → ⦃ eq : Δₓ ≡ toΓ Δᵉ ⦄ → (x∈Δ : x ∈ toΓ Δᵉ) → (tx ≡ !Γ (toΓ Δᵉ) [ x∈Δ ]) → (e : Δₓ ⊢ t) → x ::: tx , Δ ⊢ t
+contract {x = x} {tx = tx} {t = t} {Δ = Δ} {Δᵉ = Δᵉ} ⦃ eq = refl ⦄  _ _ ((`v y) ⦃ i = i ⦄ ⦃ eq = eq′ ⦄) with x ≟ y
+... | no ¬x≡y = (`v y) ⦃ i = _y∈toΓΔ→y∈Δ1_ ¬x≡y Δᵉ i ⦄  ⦃ eq = fromExt-Γ ⦃ Δ′ = Δᵉ ⦄ ⦃ i = i ⦄ ¬x≡y eq′ ⦄
+... | yes refl with t S.≟ tx
+...              | yes refl = `v x
+...              | no ¬t≡tx with ¬t≡tx (firstPf (`v x) ⦃ eq′ ⦄ refl)
+... | ()
+
+
+--... | yes refl with t S.≟ tx
+--...              | yes refl = `v x
+--...              | no ¬t≡tx = {!!}
+
+
 reduceEnv : ∀ {x t s Δ Δₓ} → {Δᵉ : Δ [ x ::: s ]} → ⦃ eq : Δₓ ≡ toΓ Δᵉ ⦄ → (e : Δₓ ⊢ t) → x nfi e → Δ ⊢ t
-reduceEnv `true nfi-true                               = `true 
+reduceEnv `true nfi-true                               = `true
 reduceEnv `false nfi-false                             = `false
 reduceEnv {Δᵉ = Δᵉ} ⦃ eq = refl ⦄ ((`v y) ⦃ i = i ⦄ ⦃ eq = eq′ ⦄) (nfi-var ¬x≡y) = (`v y) ⦃ i = _y∈toΓΔ→y∈Δ1_ ¬x≡y Δᵉ i ⦄  ⦃ eq = fromExt-Γ ⦃ Δ′ = Δᵉ ⦄ ⦃ i = i ⦄ ¬x≡y eq′ ⦄
 reduceEnv (`c c) (nfi-const )                          = `c c
 reduceEnv {x} {t} {s} {Δ} {Δᵉ = Δᵉ} ⦃ eq = eq ⦄ (`λ _ `: tx ⇨ e) nfi-lambda-1 with x nfiD e
-... | yes x-nfi-e = `λ x `: tx ⇨ reduceEnv {Δᵉ = shift x tx Δᵉ} ⦃ eq = cong (λ δ → x ::: tx , δ) eq ⦄ e x-nfi-e
-... | no ¬x-nfi-e = `λ x `: tx ⇨ {!!}  -- ?1 : x ::: tx , Δ ⊢ tr 
+... | yes x-nfi-e = `λ x `: tx ⇨ reduceEnv {Δᵉ = shift x tx Δᵉ} ⦃ eq = cong (λ δ → x ::: tx , δ) eq ⦄ e x-nfi-e -- FIXME-SS: May not end up needing this
+... | no ¬x-nfi-e = `λ x `: tx ⇨ contract {Δᵉ = shift x tx Δᵉ} ⦃ eq = cong (λ δ → x ::: tx , δ) eq ⦄ H refl e
 reduceEnv {Δᵉ = Δᵉ} ⦃ eq = eq ⦄ (`λ y `: t ⇨ e) (nfi-lambda-2 ¬x≡y x-nfi-e)  = `λ y `: t ⇨ reduceEnv {Δᵉ = shift y t Δᵉ } ⦃ eq = cong (λ δ → y ::: t , δ) eq ⦄  e x-nfi-e
 reduceEnv (f `₋ a) (nfi-app x-nfi-f x-nfi-a)           = reduceEnv f x-nfi-f `₋ reduceEnv a x-nfi-a
 reduceEnv (e₁ `, e₂) (nfi-pair x-nfi-e₁  x-nfi-e₂)     = reduceEnv e₁ x-nfi-e₁ `, reduceEnv e₂ x-nfi-e₂
 reduceEnv (`fst e) (nfi-fst x-nfi-e)                   = `fst (reduceEnv e x-nfi-e)
 reduceEnv (`snd e) (nfi-snd x-nfi-e)                   = `snd (reduceEnv e x-nfi-e)
 reduceEnv `tt nfi-tt                                   = `tt
+
+
+
 
 eta-reduce : ∀ {t₁ t₂} → · ⊢ t₁ `⇨ t₂ → · ⊢ t₁ `⇨ t₂
 eta-reduce (`c c) = `c c
